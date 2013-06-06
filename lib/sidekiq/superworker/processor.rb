@@ -17,7 +17,7 @@ module Sidekiq
         raise "Job has nil jid: #{item}" if item['jid'].nil?
 
         subjob = find_subjob_by_jid(item['jid'])
-        SuperjobProcessor.error(subjob.superjob_id, worker, item, exception)
+        SuperjobProcessor.error(subjob.superjob_id, worker, item, exception) if subjob
       end
 
       protected
@@ -32,11 +32,12 @@ module Sidekiq
       def find_subjob_by_jid(jid)
         # The job may complete before the Subjob record is created; in case that happens,
         # we need to sleep briefly and requery.
-        tries = 3
-        while !(subjob = Subjob.find_by_jid(jid)) && tries > 0
-          sleep 1
-          tries -= 1
+        try = 0
+        while !(subjob = Subjob.find_by_jid(jid)) && try < 5
+          sleep 2 ** try
+          try += 1
         end
+        Sidekiq.logger.info "Unable to find subjob record for JID #{jid}" unless subjob
         subjob
       end
     end
