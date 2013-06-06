@@ -20,3 +20,4 @@ Sidekiq.configure_server do |config|
 end
 
 Superworker = Sidekiq::Superworker::Worker unless Object.const_defined?('Superworker')
+Sidekiq::Monitor::Cleaner.add_ignored_queue(Sidekiq::Superworker::SuperjobProcessor.queue_name) if defined?(Sidekiq::Monitor)
