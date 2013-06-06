@@ -17,20 +17,7 @@ module Sidekiq
         raise "Job has nil jid: #{item}" if item['jid'].nil?
 
         subjob = find_subjob_by_jid(item['jid'])
-        if defined?(Sidekiq::Monitor)
-          job = Sidekiq::Monitor::Job.where(queue: :superworker, jid: subjob.superjob_id).first
-          if job
-            result = {
-              message: "#{exception.message} (thrown in #{worker.class}, JID: #{item['jid']})",
-              backtrace: exception.backtrace
-            }
-            job.update_attributes(
-              finished_at: DateTime.now,
-              status: 'failed',
-              result: result
-            )
-          end
-        end
+        SuperjobProcessor.error(subjob.superjob_id, worker, item, exception)
       end
 
       protected

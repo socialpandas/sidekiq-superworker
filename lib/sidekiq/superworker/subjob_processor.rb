@@ -94,16 +94,7 @@ module Sidekiq
             descendants_are_complete(parent)
           # Otherwise, this is the final subjob of the superjob
           else
-            # Set the superjob Sidekiq::Monitor::Job as being complete
-            if defined?(Sidekiq::Monitor)
-              job = Sidekiq::Monitor::Job.where(queue: :superworker, jid: subjob.superjob_id).first
-              if job
-                job.update_attributes(
-                  status: 'complete',
-                  finished_at: Time.now
-                )
-              end
-            end
+            SuperjobProcessor.complete(subjob.superjob_id)
           end
         end
       end

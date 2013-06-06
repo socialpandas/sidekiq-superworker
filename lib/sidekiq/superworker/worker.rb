@@ -26,24 +26,7 @@ module Sidekiq
             def perform_async(*arg_values)
               @args = Hash[@arg_keys.zip(arg_values)]
               subjobs = create_subjobs
-
-              # Create a Sidekiq::Monitor::Job for the superjob
-              if defined?(Sidekiq::Monitor)
-                now = Time.now
-                Sidekiq::Monitor::Job.create(
-                  args: arg_values,
-                  class_name: @class_name,
-                  enqueued_at: now,
-                  jid: @superjob_id,
-                  queue: :superworker,
-                  started_at: now,
-                  status: 'running'
-                )
-              end
-
-              # Enqueue the first root-level subjob
-              first_subjob = subjobs.select{ |subjob| subjob.parent_id.nil? }.first
-              SubjobProcessor.enqueue(first_subjob)
+              SuperjobProcessor.create(@superjob_id, @class_name, arg_values, subjobs)
             end
 
             protected
