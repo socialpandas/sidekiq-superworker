@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sidekiq-superworker (0.0.3)
+    sidekiq-superworker (0.0.4)
       sidekiq (>= 2.1.0)
 
 GEM
@@ -36,7 +36,7 @@ GEM
       multi_json (~> 1.0)
     arel (3.0.2)
     builder (3.0.4)
-    celluloid (0.14.0)
+    celluloid (0.14.1)
       timers (>= 1.0.0)
     connection_pool (1.0.0)
     database_cleaner (1.0.1)
@@ -91,8 +91,8 @@ GEM
       rspec-core (~> 2.12.0)
       rspec-expectations (~> 2.12.0)
       rspec-mocks (~> 2.12.0)
-    sidekiq (2.12.0)
-      celluloid (>= 0.14.0)
+    sidekiq (2.12.1)
+      celluloid (>= 0.14.1)
       connection_pool (>= 1.0.0)
       json
       redis (>= 3.0)
