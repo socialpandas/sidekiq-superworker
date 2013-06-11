@@ -29,15 +29,17 @@ module Sidekiq
         SubjobProcessor.complete(subjob) if subjob
       end
 
+      # The job may've been created outside of sidekiq-superworker, so a nil return value for
+      # this method isn't necessarily problematic
       def find_subjob_by_jid(jid)
         # The job may complete before the Subjob record is created; in case that happens,
         # we need to sleep briefly and requery.
+        max_tries = 5
         try = 0
-        while !(subjob = Subjob.find_by_jid(jid)) && try < 5
+        while !(subjob = Subjob.find_by_jid(jid)) && try < max_tries
           sleep 2 ** try
           try += 1
         end
-        Sidekiq.logger.info "Unable to find subjob record for JID #{jid}" unless subjob
         subjob
       end
     end
