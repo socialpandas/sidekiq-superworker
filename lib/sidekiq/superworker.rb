@@ -7,6 +7,14 @@ Dir.glob("#{directory}/../../app/models/sidekiq/superworker/*.rb") { |file| requ
 
 module Sidekiq
   module Superworker
+    def self.logger
+      Logging.logger
+    end
+
+    def self.debug(message)
+      logger.debug(message)
+    end
+
     def self.table_name_prefix
       'sidekiq_superworker_'
     end
