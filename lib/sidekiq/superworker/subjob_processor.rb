@@ -2,12 +2,16 @@ module Sidekiq
   module Superworker
     class SubjobProcessor
       def self.enqueue(subjob)
+        Superworker.debug "#{subjob.to_info}: Trying to enqueue"
         # Only enqueue subjobs that aren't running, complete, etc
         return unless subjob.status == 'initialized'
         
+        Superworker.debug "#{subjob.to_info}: Enqueueing"
         # If this is a parallel subjob, enqueue all of its children
         if subjob.subworker_class == 'parallel'
           subjob.update_attribute(:status, 'running')
+
+          Superworker.debug "#{subjob.to_info}: Enqueueing parallel children"
           jids = subjob.children.collect do |child|
             enqueue(child)
           end
@@ -31,6 +35,8 @@ module Sidekiq
       end
 
       def self.enqueue_in_sidekiq(subjob, klass)
+        Superworker.debug "#{subjob.to_info}: Enqueueing in Sidekiq"
+
         # If sidekiq-unique-jobs is being used for this worker, a number of issues arise if the subjob isn't
         # queued, so we'll bypass the unique functionality of the worker while running the subjob.
         is_unique = klass.respond_to?(:sidekiq_options_hash) && !!klass.sidekiq_options_hash['unique']
@@ -52,11 +58,13 @@ module Sidekiq
       end
 
       def self.complete(subjob)
+        Superworker.debug "#{subjob.to_info}: Complete"
         subjob.update_attribute(:status, 'complete')
 
         # If children are present, enqueue the first one
         children = subjob.children
         if children.present?
+          Superworker.debug "#{subjob.to_info}: Enqueueing children"
           enqueue(children.first)
           return
         # Otherwise, set this as having its descendants complete
@@ -66,6 +74,7 @@ module Sidekiq
       end
 
       def self.descendants_are_complete(subjob)
+        Superworker.debug "#{subjob.to_info}: Descendants are complete"
         subjob.update_attribute(:descendants_are_complete, true)
 
         parent = subjob.parent
@@ -76,6 +85,7 @@ module Sidekiq
         if parent
           siblings_descendants_are_complete = parent.children.all? { |child| child.descendants_are_complete }
           if siblings_descendants_are_complete
+            Superworker.debug "#{subjob.to_info}: Parent (#{parent.to_info}) is complete"
             descendants_are_complete(parent)
             parent.update_attribute(:status, 'complete') if is_child_of_parallel
           end
@@ -94,6 +104,7 @@ module Sidekiq
             descendants_are_complete(parent)
           # Otherwise, this is the final subjob of the superjob
           else
+            Superworker.debug "#{subjob.to_info}: Superjob is complete"
             SuperjobProcessor.complete(subjob.superjob_id)
           end
         end
