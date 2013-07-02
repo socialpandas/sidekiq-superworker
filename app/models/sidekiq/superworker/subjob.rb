@@ -26,6 +26,10 @@ module Sidekiq
       def next
         relatives.where(subjob_id: next_id).first
       end
+
+      def to_info
+        "Subjob ##{id} (#{superworker_class} > #{subworker_class})"
+      end
     end
   end
 end
