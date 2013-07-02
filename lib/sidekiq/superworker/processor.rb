@@ -38,11 +38,13 @@ module Sidekiq
         Superworker.debug "JID ##{jid}: Trying to find Subjob"
         # The job may complete before the Subjob record is created; in case that happens,
         # we need to sleep briefly and requery.
-        max_tries = 5
-        try = 0
-        while !(subjob = Subjob.find_by_jid(jid)) && try < max_tries
-          sleep 2 ** try
-          try += 1
+        tries = 5
+        subjob = nil
+        (1..tries).each do |try|
+          subjob = Subjob.find_by_jid(jid)
+          break if subjob
+          Superworker.debug "JID ##{jid}: Sleeping before trying to find Subjob again"
+          sleep (2 ** try)
         end
         Superworker.debug "JID ##{jid}: Subjob found: #{subjob ? subjob.to_info : 'nil'}"
         subjob
