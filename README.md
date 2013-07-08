@@ -53,8 +53,6 @@ Superworker.create(:MySuperworker, :user_id, :comment_id) do
 end
 ```
 
-If you're also using [sidekiq_monitor](https://github.com/socialpandas/sidekiq_monitor), you can easily monitor when a superworker is running and when it has finished.
-
 Installation
 ------------
 
@@ -99,6 +97,33 @@ Superworker.create(:MySuperworker, :user_id, :comment_id) do
   Worker2()
 end
 ```
+
+### Monitoring
+
+Using [sidekiq_monitor](https://github.com/socialpandas/sidekiq_monitor) with Sidekiq Superworker is strongly encouraged, as it lets you easily monitor when a superjob is running, when it has finished, whether it has encountered errors, and the status of all of its subjobs.
+
+### Batch Jobs
+
+By using a `batch` block, you can create batches of subjobs that are all associated with the superjob. The following will run Worker1 and Worker2 in serial for every user ID in the array passed to perform_async.
+
+```ruby
+Superworker.create(:MyBatchSuperworker, :user_ids) do
+  batch user_ids: :user_id do
+    Worker1 :user_id
+    Worker2 :user_id
+  end
+end
+
+MyBatchSuperworker.perform_async([30, 31, 32, 33, 34, 35])
+```
+
+Grouping jobs into batches greatly improves your ability to audit them and determine when batches have finished.
+
+### Errors
+
+If a subjob encounters an exception, the subjobs that depend on it won't run, but the rest of the subjobs will continue as usual.
+
+If sidekiq_monitor is being used, the exception will be bubbled up to the superjob, which lets you easily see when your superjobs have failed.
 
 License
 -------
