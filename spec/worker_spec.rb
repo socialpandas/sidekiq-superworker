@@ -1,15 +1,16 @@
 require 'spec_helper'
 
-# TODO: Write simpler tests!
+# TODO: Clean up, write simpler tests!
 
 describe Sidekiq::Superworker::Worker do
-  queue_name = 'sidekiq_superworker_test'
+  include Sidekiq::Superworker::WorkerHelpers
 
   before :all do
-    @queue = Sidekiq::Queue.new(queue_name)
+    @queue = Sidekiq::Queue.new(dummy_worker_queue)
     clean_datastores
+    create_dummy_workers
 
-    # For testing complex dependencies
+    # For testing complex blocks
     Sidekiq::Superworker::Worker.create(:ComplexSuperworker, :first_argument, :second_argument) do
       Worker1 :first_argument do       # 1
         Worker2 :second_argument       # 2
@@ -27,14 +28,22 @@ describe Sidekiq::Superworker::Worker do
       end
     end
 
-    # For testing that empty arguments work
+    # For testing batch blocks
+    Sidekiq::Superworker::Worker.create(:BatchSuperworker, :user_ids) do
+      batch user_ids: :user_id do
+        Worker1 :user_id
+        Worker2 :user_id
+      end
+    end
+
+    # For testing empty arguments
     Sidekiq::Superworker::Worker.create(:EmptyArgumentsSuperworker) do
       Worker1 do
         Worker2()
       end
     end
 
-    # For testing that nested superworkers work
+    # For testing nested superworkers
     Sidekiq::Superworker::Worker.create(:ChildSuperworker) do
       Worker2 do
         Worker3()
@@ -47,9 +56,106 @@ describe Sidekiq::Superworker::Worker do
   end
 
   describe '.perform_async' do
+    context 'batch superworker' do
+      before :all do
+        BatchSuperworker.perform_async([100, 101])
+      end
+
+      after :all do
+        clean_datastores
+      end
+
+      it 'creates the correct Subjob records' do
+        expected_record_hashes =
+          {1=>
+            {:subjob_id=>1,
+             :parent_id=>nil,
+             :children_ids=>[2, 5],
+             :next_id=>nil,
+             :subworker_class=>"batch",
+             :superworker_class=>"BatchSuperworker",
+             :arg_keys=>[{:user_ids=>:user_id}],
+             :arg_values=>[{:user_ids=>:user_id}],
+             :status=>"running",
+             :descendants_are_complete=>false},
+           2=>
+            {:subjob_id=>2,
+             :parent_id=>1,
+             :children_ids=>nil,
+             :next_id=>nil,
+             :subworker_class=>"batch_child",
+             :superworker_class=>"BatchSuperworker",
+             :arg_keys=>[:user_id],
+             :arg_values=>[100],
+             :status=>"running",
+             :descendants_are_complete=>false},
+           3=>
+            {:subjob_id=>3,
+             :parent_id=>2,
+             :children_ids=>nil,
+             :next_id=>4,
+             :subworker_class=>"Worker1",
+             :superworker_class=>"BatchSuperworker",
+             :arg_keys=>[:user_id],
+             :arg_values=>[100],
+             :status=>"queued",
+             :descendants_are_complete=>false},
+           4=>
+            {:subjob_id=>4,
+             :parent_id=>2,
+             :children_ids=>nil,
+             :next_id=>nil,
+             :subworker_class=>"Worker2",
+             :superworker_class=>"BatchSuperworker",
+             :arg_keys=>[:user_id],
+             :arg_values=>[100],
+             :status=>"initialized",
+             :descendants_are_complete=>false},
+           5=>
+            {:subjob_id=>5,
+             :parent_id=>1,
+             :children_ids=>nil,
+             :next_id=>nil,
+             :subworker_class=>"batch_child",
+             :superworker_class=>"BatchSuperworker",
+             :arg_keys=>[:user_id],
+             :arg_values=>[101],
+             :status=>"running",
+             :descendants_are_complete=>false},
+           6=>
+            {:subjob_id=>6,
+             :parent_id=>5,
+             :children_ids=>nil,
+             :next_id=>7,
+             :subworker_class=>"Worker1",
+             :superworker_class=>"BatchSuperworker",
+             :arg_keys=>[:user_id],
+             :arg_values=>[101],
+             :status=>"queued",
+             :descendants_are_complete=>false},
+           7=>
+            {:subjob_id=>7,
+             :parent_id=>5,
+             :children_ids=>nil,
+             :next_id=>nil,
+             :subworker_class=>"Worker2",
+             :superworker_class=>"BatchSuperworker",
+             :arg_keys=>[:user_id],
+             :arg_values=>[101],
+             :status=>"initialized",
+             :descendants_are_complete=>false}}
+
+        record_hashes = subjobs_to_indexed_hash(Sidekiq::Superworker::Subjob.all)
+        record_hashes.should have(expected_record_hashes.length).items
+        record_hashes.each do |subjob_id, record_hash|
+          expected_record_hashes[subjob_id].should == record_hash
+        end
+      end
+    end
+
     context 'empty arguments superworker' do
       before :all do
-        worker_perform_async(EmptyArgumentsSuperworker)
+        EmptyArgumentsSuperworker.perform_async
       end
 
       after :all do
@@ -93,7 +199,7 @@ describe Sidekiq::Superworker::Worker do
 
     context 'nested superworker' do
       before :all do
-        worker_perform_async(NestedSuperworker)
+        NestedSuperworker.perform_async
       end
 
       after :all do
@@ -308,15 +414,80 @@ describe Sidekiq::Superworker::Worker do
   end
 
   describe '.perform_async cascade' do
-    before :each do
-      worker_perform_async(ComplexSuperworker)
-    end
-
     after :each do
       clean_datastores
     end
 
+    context 'batch superworker' do
+      before :each do
+        BatchSuperworker.perform_async([100, 101])
+      end
+
+      # subjob_id - subworker_class
+      # 1 - batch
+      # 2 - batch_child
+      # 3 - Worker1
+      # 4 - Worker2
+      # 5 - batch_child
+      # 6 - Worker1
+      # 7 - Worker2
+
+      it 'sets the correct initial statuses' do
+        subjob_statuses_should_equal(
+          [1,2,5] => 'running',
+          [3,6] => 'queued',
+          [4,7] => 'initialized'
+        )
+      end
+
+      it 'sets the correct statuses after subjob #3 completes' do
+        trigger_completion_of_sidekiq_job(3)
+        subjob_statuses_should_equal(
+          [1,2,5] => 'running',
+          [3] => 'complete',
+          [7] => 'initialized',
+          [4,6] => 'queued'
+        )
+      end
+
+      it 'sets the correct statuses after subjob #4 completes' do
+        trigger_completion_of_sidekiq_job(3)
+        trigger_completion_of_sidekiq_job(4)
+        subjob_statuses_should_equal(
+          [1,5] => 'running',
+          [2,3,4] => 'complete',
+          [7] => 'initialized',
+          [6] => 'queued'
+        )
+      end
+
+      it 'sets the correct statuses after subjob #6 completes' do
+        trigger_completion_of_sidekiq_job(3)
+        trigger_completion_of_sidekiq_job(4)
+        trigger_completion_of_sidekiq_job(6)
+        subjob_statuses_should_equal(
+          [1,5] => 'running',
+          [2,3,4,6] => 'complete',
+          [7] => 'queued'
+        )
+      end
+
+      it 'sets the correct statuses after subjob #7 completes' do
+        trigger_completion_of_sidekiq_job(3)
+        trigger_completion_of_sidekiq_job(4)
+        trigger_completion_of_sidekiq_job(6)
+        trigger_completion_of_sidekiq_job(7)
+        subjob_statuses_should_equal(
+          (1..7) => 'complete'
+        )
+      end
+    end
+
     context 'complex superworker' do
+      before :each do
+        worker_perform_async(ComplexSuperworker)
+      end
+
       it 'sets the correct statuses after subjob #1 completes' do
         trigger_completion_of_sidekiq_job(1)
         subjob_statuses_should_equal(
@@ -449,75 +620,7 @@ describe Sidekiq::Superworker::Worker do
     end
   end
 
-  def clean_datastores
-    DatabaseCleaner.clean_with(:truncation)
-    @queue.clear
-  end
-
-  def trigger_completion_of_sidekiq_job(subjob_id)
-    jid = Sidekiq::Superworker::Subjob.where(subjob_id: subjob_id).first.jid
-    job = find_sidekiq_job_by_jid(jid)
-    Sidekiq::Superworker::Processor.new.complete(job.item, false)
-    job.delete
-  end
-
   def worker_perform_async(worker)
     worker.perform_async(100, 101)
-  end
-
-  def find_sidekiq_job_by_jid(jid)
-    @queue.each do |job|
-      return job if job.jid == jid
-    end
-    nil
-  end
-
-  def subjobs_to_indexed_hash(subjobs)
-    attributes = [
-      :subjob_id,
-      :parent_id,
-      :children_ids,
-      :next_id,
-      :subworker_class,
-      :superworker_class,
-      :arg_keys,
-      :arg_values,
-      :status,
-      :descendants_are_complete
-    ]
-
-    hash_array = subjobs.collect do |subjob|
-      attributes.inject({}) { |hash, attribute| hash[attribute] = subjob.send(attribute); hash }
-    end
-    add_indexes_to_subjobs_hash_array(hash_array)
-  end
-
-  def add_indexes_to_subjobs_hash_array(subjobs_array)
-    subjobs_array.inject({}) { |hash, record_hash| hash[record_hash[:subjob_id]] = record_hash; hash }
-  end
-
-  def subjob_statuses_should_equal(hash)
-    expected_statuses = {}
-    hash.each do |ids, status|
-      ids = [ids] unless ids.is_a?(Enumerable)
-      ids.each { |id| expected_statuses[id] = status}
-    end
-    actual_statuses = Hash[Sidekiq::Superworker::Subjob.order(:subjob_id).collect { |subjob| [subjob.id, subjob.status] }]
-    actual_statuses.should == expected_statuses
-  end
-
-  # Create dummy Sidekiq worker classes: Worker1..Worker9
-  (1..9).each do |i|
-    klass = Class.new do
-      include Sidekiq::Worker
-
-      sidekiq_options :queue => queue_name
-
-      def perform
-        nil
-      end
-    end
-
-    Object.const_set("Worker#{i}", klass)
   end
 end
