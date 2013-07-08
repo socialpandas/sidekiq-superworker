@@ -119,6 +119,18 @@ MyBatchSuperworker.perform_async([30, 31, 32, 33, 34, 35])
 
 Grouping jobs into batches greatly improves your ability to audit them and determine when batches have finished.
 
+### Superjob Names
+
+If you're using sidekiq_monitor and want to set a name for a superjob, you can set it in an additional argument, like so:
+
+```ruby
+# Unnamed
+MySuperworker.perform_async(23)
+
+# Named
+MySuperworker.perform_async(23, name: 'My job name')
+```
+
 ### Errors
 
 If a subjob encounters an exception, the subjobs that depend on it won't run, but the rest of the subjobs will continue as usual.
