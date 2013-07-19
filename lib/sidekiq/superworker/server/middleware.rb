@@ -8,12 +8,13 @@ module Sidekiq
 
         def call(worker, item, queue)
           begin
-            yield
+            return_value = yield
           rescue Exception => exception
             @processor.error(worker, item, queue, exception)
             raise exception
           end
           @processor.complete(item)
+          return_value
         end
       end
     end
