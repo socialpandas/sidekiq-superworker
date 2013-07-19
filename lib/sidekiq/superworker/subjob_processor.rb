@@ -82,6 +82,12 @@ module Sidekiq
         end
       end
 
+      def self.error(subjob, worker, item, exception)
+        Superworker.debug "#{subjob.to_info}: Error"
+        subjob.update_attribute(:status, 'failed')
+        SuperjobProcessor.error(subjob.superjob_id, worker, item, exception)
+      end
+
       def self.descendants_are_complete(subjob)
         Superworker.debug "#{subjob.to_info}: Descendants are complete"
         subjob.update_attribute(:descendants_are_complete, true)

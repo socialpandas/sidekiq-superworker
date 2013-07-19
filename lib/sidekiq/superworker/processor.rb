@@ -19,7 +19,7 @@ module Sidekiq
 
         Superworker.debug "JID ##{item['jid']}: Error thrown"
         subjob = find_subjob_by_jid(item['jid'])
-        SuperjobProcessor.error(subjob.superjob_id, worker, item, exception) if subjob
+        SubjobProcessor.error(subjob, worker, item, exception) if subjob
       end
 
       protected
