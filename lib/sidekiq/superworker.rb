@@ -40,4 +40,18 @@ if defined?(Sidekiq::Monitor)
     job.queue == Sidekiq::Superworker::SuperjobProcessor.queue_name.to_s
   end
 
+  # Add a "superjob:{id}" search filter
+  Sidekiq::Monitor::JobsDatatable.add_search_filter({
+    pattern: /^superjob:([\d]+)$/,
+    filter: lambda do |search_term, records|
+      superjob_id = search_term[/^superjob:([\d]+)$/, 1]
+      superjob = Sidekiq::Monitor::Job.find_by_id(superjob_id)
+      # Return empty set
+      return records.where(id: nil) unless superjob
+      superjob_jid = superjob.jid
+      subjob_jids = Sidekiq::Superworker::Subjob.where(superjob_id: superjob_jid).map(&:jid)
+      records.where(jid: subjob_jids + [superjob_jid])
+    end
+  })
+
 end
