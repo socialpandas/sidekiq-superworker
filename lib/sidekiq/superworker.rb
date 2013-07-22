@@ -29,13 +29,15 @@ end
 
 Superworker = Sidekiq::Superworker::Worker unless Object.const_defined?('Superworker')
 
-# If sidekiq_monitor is being used, customize how superjobs are monitored
 if defined?(Sidekiq::Monitor)
+
   # Make Cleaner ignore superjobs, as they don't exist in Redis and thus won't be synced with Sidekiq::Monitor::Job
   Sidekiq::Monitor::Cleaner.add_ignored_queue(Sidekiq::Superworker::SuperjobProcessor.queue_name) if defined?(Sidekiq::Monitor)
 
   # Add a custom view that shows the subjobs for a superjob
-  Sidekiq::Monitor::CustomViews.add 'Subjobs', "#{directory}/../../app/views/sidekiq/superworker/subjobs" do |job|
+  custom_views_directory = "#{directory}/../../app/views/sidekiq/superworker/subjobs"
+  Sidekiq::Monitor::CustomViews.add 'Subjobs', custom_views_directory do |job|
     job.queue == Sidekiq::Superworker::SuperjobProcessor.queue_name.to_s
   end
+
 end
