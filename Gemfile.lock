@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sidekiq-superworker (0.0.6)
+    sidekiq-superworker (0.0.7)
       sidekiq (>= 2.1.0)
 
 GEM
