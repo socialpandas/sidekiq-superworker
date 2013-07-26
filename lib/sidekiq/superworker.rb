@@ -49,7 +49,7 @@ if defined?(Sidekiq::Monitor)
       # Return empty set
       return records.where(id: nil) unless superjob
       superjob_jid = superjob.jid
-      subjob_jids = Sidekiq::Superworker::Subjob.where(superjob_id: superjob_jid).map(&:jid)
+      subjob_jids = Sidekiq::Superworker::Subjob.where(superjob_id: superjob_jid).map(&:jid).compact
       records.where(jid: subjob_jids + [superjob_jid])
     end
   })
