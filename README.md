@@ -98,6 +98,17 @@ Superworker.create(:MySuperworker, :user_id, :comment_id) do
 end
 ```
 
+### Logging
+
+To make debugging easier, Sidekiq Superworker provides detailed log messages when its logger is set to the DEBUG level:
+
+```ruby
+# config/initializers/superworker.rb
+logger = Logger.new(Rails.root.join('log', 'superworker.log'))
+logger.level = Logger::DEBUG
+Sidekiq::Superworker::Logging.logger = logger
+```
+
 ### Monitoring
 
 Using [sidekiq_monitor](https://github.com/socialpandas/sidekiq_monitor) with Sidekiq Superworker is strongly encouraged, as it lets you easily monitor when a superjob is running, when it has finished, whether it has encountered errors, and the status of all of its subjobs.
