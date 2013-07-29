@@ -43,7 +43,7 @@ module Sidekiq
 
             def create_subjobs(arg_values)
               records = @dsl_hash.nested_hash_to_records(@nested_hash, @args)
-              records.collect do |id, record|
+              subjobs = records.collect do |id, record|
                 record[:status] = 'initialized'
                 record[:superjob_id] = @superjob_id
                 record[:superworker_class] = @class_name
@@ -54,7 +54,11 @@ module Sidekiq
                     arg_key.is_a?(Symbol) ? @args[arg_key] : arg_key
                   end
                 end
-                Sidekiq::Superworker::Subjob.create(record)
+                record
+              end
+              # Perform the inserts in a single transaction to improve the performance of large mass inserts
+              Sidekiq::Superworker::Subjob.transaction do
+                Sidekiq::Superworker::Subjob.create(subjobs)
               end
             end
           end
