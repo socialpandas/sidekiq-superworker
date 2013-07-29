@@ -6,7 +6,7 @@ module Sidekiq
       end
 
       def self.create(superjob_id, superworker_class_name, args, subjobs, options={})
-        Superworker.debug "Superworker ##{superjob_id}: create"
+        Superworker.debug "Superworker ##{superjob_id}: Create"
         
         # If sidekiq_monitor is being used, create a Sidekiq::Monitor::Job for the superjob
         if defined?(Sidekiq::Monitor)
@@ -29,7 +29,7 @@ module Sidekiq
       end
 
       def self.complete(superjob_id)
-        Superworker.debug "Superworker ##{superjob_id}: complete"
+        Superworker.debug "Superworker ##{superjob_id}: Complete"
 
         # Set the superjob Sidekiq::Monitor::Job as being complete
         if defined?(Sidekiq::Monitor)
@@ -44,7 +44,7 @@ module Sidekiq
       end
 
       def self.error(superjob_id, worker, item, exception)
-        Superworker.debug "Superworker ##{superjob_id}: error"
+        Superworker.debug "Superworker ##{superjob_id}: Error"
 
         if defined?(Sidekiq::Monitor)
           job = Sidekiq::Monitor::Job.where(queue: queue_name, jid: superjob_id).first
