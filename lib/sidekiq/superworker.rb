@@ -1,6 +1,7 @@
 require 'sidekiq'
 
 directory = File.dirname(File.absolute_path(__FILE__))
+require "#{directory}/client_ext.rb"
 Dir.glob("#{directory}/superworker/**/*.rb") { |file| require file }
 Dir.glob("#{directory}/../generators/sidekiq/superworker/**/*.rb") { |file| require file }
 Dir.glob("#{directory}/../../app/models/sidekiq/superworker/*.rb") { |file| require file }

@@ -33,17 +33,22 @@ module Sidekiq
             complete(subjob)
           # Otherwise, enqueue it in Sidekiq
           else
-            jid = enqueue_in_sidekiq(subjob, klass)
+            # We need to explicitly set the job's JID, so that the ActiveRecord record can be updated before
+            # the job fires off. If the job started first, it could finish before the ActiveRecord update
+            # transaction completes, causing a race condition when finding the ActiveRecord record in
+            # Processor#complete.
+            jid = SecureRandom.hex(12)
             subjob.update_attributes(
               jid: jid,
               status: 'queued'
             )
+            enqueue_in_sidekiq(subjob, klass, jid)
           end
         end
         jid
       end
 
-      def self.enqueue_in_sidekiq(subjob, klass)
+      def self.enqueue_in_sidekiq(subjob, klass, jid)
         Superworker.debug "#{subjob.to_info}: Enqueueing in Sidekiq"
 
         # If sidekiq-unique-jobs is being used for this worker, a number of issues arise if the subjob isn't
@@ -55,8 +60,8 @@ module Sidekiq
         end
 
         arg_values = subjob.arg_values
-        jid = klass.perform_async(*arg_values)
-        warn "Nil JID returned by #{subjob.subworker_class}.perform_async with arguments #{arg_values}" if jid.nil?
+        # This is akin to perform_async, but it allows us to explicitly set the JID
+        Sidekiq::Client.push('class' => klass, 'args' => arg_values, 'jid' => jid)
 
         if is_unique
           klass.sidekiq_options_hash['unique'] = unique_value
