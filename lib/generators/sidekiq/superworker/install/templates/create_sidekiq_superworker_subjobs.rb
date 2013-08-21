@@ -13,6 +13,7 @@ class CreateSidekiqSuperworkerSubjobs < ActiveRecord::Migration
       t.text :arg_values
       t.string :status, null: false
       t.boolean :descendants_are_complete, default: false
+      t.text :meta
       
       t.timestamps
     end

@@ -8,6 +8,8 @@ module Sidekiq
       def self.create(superjob_id, superworker_class_name, args, subjobs, options={})
         Superworker.debug "Superworker ##{superjob_id}: Create"
         
+        options ||= {}
+        
         # If sidekiq_monitor is being used, create a Sidekiq::Monitor::Job for the superjob
         if defined?(Sidekiq::Monitor)
           now = Time.now
