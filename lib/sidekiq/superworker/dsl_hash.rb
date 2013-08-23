@@ -113,6 +113,7 @@ module Sidekiq
           @records[batch_child_id] = batch_child
 
           @record_id += 1
+          last_subjob_id = nil
           subjobs.values.each_with_index do |subjob, index|
             subjob_id = @record_id
             @record_id += 1
@@ -122,8 +123,9 @@ module Sidekiq
             subjob[:parent_id] = batch_child_id
             subjob[:arg_values] = iteration_args.values
             @records[subjob_id] = subjob
+            @records[last_subjob_id][:next_id] = subjob_id if last_subjob_id
+            last_subjob_id = subjob_id
             nested_hash_to_records_recursive(children, parent_id: subjob_id, scoped_args: iteration_args)
-            subjob[:next_id] = subjob_id + 1 if index < (subjobs.values.length - 1)
           end
 
           children_ids << batch_child_id
