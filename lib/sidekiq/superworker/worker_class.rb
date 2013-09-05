@@ -17,7 +17,7 @@ module Sidekiq
         protected
 
         def initialize_superjob(arg_values)
-          options = nil
+          options = {}
           
           # If an additional argument value is given, it's the superjob's options
           if (arg_values.length == @arg_keys.length + 1) && arg_values.last.is_a?(Hash)
