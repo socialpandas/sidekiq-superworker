@@ -26,6 +26,7 @@ ActiveRecord::Schema.define(:version => 20130522204048) do
     t.text     "arg_values"
     t.string   "status",                                      :null => false
     t.boolean  "descendants_are_complete", :default => false
+    t.text     "meta"
     t.datetime "created_at",                                  :null => false
     t.datetime "updated_at",                                  :null => false
   end
