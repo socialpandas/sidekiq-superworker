@@ -10,7 +10,7 @@ module Sidekiq
 
         def perform_async(*arg_values)
           options = initialize_superjob(arg_values)
-          subjobs = create_subjobs(arg_values)
+          subjobs = create_subjobs(arg_values, options)
           SuperjobProcessor.create(@superjob_id, @class_name, arg_values, subjobs, options)
         end
 
