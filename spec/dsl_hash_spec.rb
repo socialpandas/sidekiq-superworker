@@ -93,7 +93,7 @@ describe Sidekiq::Superworker::DSLHash do
 
     context 'batch superworker with nested superworker' do
       it 'returns the correct nested hash' do
-        Sidekiq::Superworker::Worker.create(:BatchNestedChildSuperworker, :first_argument) do
+        Sidekiq::Superworker::Worker.create(:BatchNestedSuperworker, :first_argument) do
           Worker2 :first_argument do
             Worker3 :first_argument
           end
@@ -101,7 +101,7 @@ describe Sidekiq::Superworker::DSLHash do
 
         block = proc do
           batch first_arguments: :first_argument do
-            BatchNestedChildSuperworker :first_argument
+            BatchNestedSuperworker :first_argument
           end
         end
         
@@ -126,7 +126,7 @@ describe Sidekiq::Superworker::DSLHash do
              :arg_values=>[10],
              :parent_id=>1},
            3=>
-            {:subworker_class=>:BatchNestedChildSuperworker,
+            {:subworker_class=>:BatchNestedSuperworker,
              :arg_keys=>[:first_argument],
              :subjob_id=>3,
              :parent_id=>2,
@@ -152,7 +152,7 @@ describe Sidekiq::Superworker::DSLHash do
              :arg_values=>[11],
              :parent_id=>1},
            7=>
-            {:subworker_class=>:BatchNestedChildSuperworker,
+            {:subworker_class=>:BatchNestedSuperworker,
              :arg_keys=>[:first_argument],
              :subjob_id=>7,
              :parent_id=>6,
