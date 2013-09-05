@@ -133,7 +133,16 @@ module Sidekiq
 
         def sidekiq_push(subjob, klass, jid)
           # This is akin to perform_async, but it allows us to explicitly set the JID
-          Sidekiq::Client.push('class' => klass, 'args' => subjob.arg_values, 'jid' => jid)
+          item = sidekiq_item(subjob, klass, jid)
+          Sidekiq::Client.push(item)
+        end
+
+        def sidekiq_item(subjob, klass, jid)
+          item = { 'class' => klass, 'args' => subjob.arg_values, 'jid' => jid }
+          if subjob.meta && subjob.meta[:sidekiq]
+            item.merge!(subjob.meta[:sidekiq].stringify_keys)
+          end
+          item
         end
       end
     end
