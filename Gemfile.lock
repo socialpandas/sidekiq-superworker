@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sidekiq-superworker (0.1.1)
+    sidekiq-superworker (0.1.2)
       activerecord-import
       sidekiq (>= 2.1.0)
 
