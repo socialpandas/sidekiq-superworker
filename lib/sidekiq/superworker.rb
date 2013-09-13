@@ -1,4 +1,5 @@
 require 'sidekiq'
+require 'activerecord-import'
 
 directory = File.dirname(File.absolute_path(__FILE__))
 require "#{directory}/client_ext.rb"
@@ -8,6 +9,18 @@ Dir.glob("#{directory}/../../app/models/sidekiq/superworker/*.rb") { |file| requ
 
 module Sidekiq
   module Superworker
+    DEFAULTS = {
+      insert_method: :single
+    }
+
+    def self.options
+      @options ||= DEFAULTS.dup
+    end
+
+    def self.options=(opts)
+      @options = opts
+    end
+
     def self.logger
       Logging.logger
     end

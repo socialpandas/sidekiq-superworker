@@ -98,6 +98,18 @@ Superworker.create(:MySuperworker, :user_id, :comment_id) do
 end
 ```
 
+### Options
+
+#### Insert Method
+
+When a superjob is queued, records for all of its subjobs are created. By default, each subjob record will be created using a separate insert query. If you're creating superjobs with large numbers of subjobs and want to improve performance, you can create these records using a multiple insert query instead. To this, set `:insert_method` to `:multiple`:
+
+```ruby
+# config/initializers/superworker.rb
+Sidekiq::Superworker.options[:insert_method] = :multiple
+
+```
+
 ### Logging
 
 To make debugging easier, Sidekiq Superworker provides detailed log messages when its logger is set to the DEBUG level:
