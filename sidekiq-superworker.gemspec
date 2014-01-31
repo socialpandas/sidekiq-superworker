@@ -15,8 +15,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'sidekiq', '>= 2.1.0'
   s.add_dependency 'activerecord-import'
   
-  s.add_development_dependency 'rails'
+  s.add_development_dependency 'rails', '~> 3.2'
   s.add_development_dependency 'sqlite3'
-  s.add_development_dependency 'rspec-rails'
+  s.add_development_dependency 'rspec-rails', '~> 2.12'
   s.add_development_dependency 'database_cleaner'
 end
