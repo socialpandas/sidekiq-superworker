@@ -8,8 +8,26 @@ describe Sidekiq::Superworker::DSLHash do
     @dsl_hash = Sidekiq::Superworker::DSLHash.new
   end
 
+  describe '#get_batch_iteration_arg_value_arrays' do
+    context 'one array argument' do
+      it 'returns the arrays' do
+        @dsl_hash.instance_variable_set(:@args, { first_arguments: [10, 11, 12] })
+        arrays = @dsl_hash.send(:get_batch_iteration_arg_value_arrays, { first_arguments: :first_argument })
+        arrays.should == [[10], [11], [12]]
+      end
+    end
+
+    context 'two array arguments' do
+      it 'returns the arrays' do
+        @dsl_hash.instance_variable_set(:@args, { first_arguments: [10, 11, 12], second_arguments: [20, 21, 22] })
+        arrays = @dsl_hash.send(:get_batch_iteration_arg_value_arrays, { first_arguments: :first_argument, second_arguments: :second_argument })
+        arrays.should == [[10, 20], [11, 21], [12, 22]]
+      end
+    end
+  end
+
   describe '#nested_hash_to_records' do
-    context 'batch superworker' do
+    context 'batch superworker with one array argument' do
       it 'returns the correct records' do
         block = proc do
           batch first_arguments: :first_argument do
@@ -88,6 +106,91 @@ describe Sidekiq::Superworker::DSLHash do
              :subjob_id=>10,
              :parent_id=>8,
              :arg_values=>[12]}}
+      end
+    end
+
+    context 'batch superworker with two array arguments' do
+      it 'returns the correct records' do
+        block = proc do
+          batch first_arguments: :first_argument, second_arguments: :second_argument do
+            Worker1 :first_argument
+            Worker2 :first_argument, :second_argument
+          end
+        end
+        
+        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        args = {
+          first_arguments: [10, 11, 12],
+          second_arguments: [20, 21, 22]
+        }
+        records = @dsl_hash.nested_hash_to_records(nested_hash, args)
+        records.should ==
+          {1=>
+            {:subjob_id=>1,
+             :subworker_class=>"batch",
+             :arg_keys=>
+              [{:first_arguments=>:first_argument, :second_arguments=>:second_argument}],
+             :arg_values=>
+              [{:first_arguments=>:first_argument, :second_arguments=>:second_argument}],
+             :parent_id=>nil,
+             :children_ids=>[2, 5, 8]},
+           2=>
+            {:subjob_id=>2,
+             :subworker_class=>"batch_child",
+             :arg_keys=>[:first_argument, :second_argument],
+             :arg_values=>[10, 20],
+             :parent_id=>1},
+           3=>
+            {:subworker_class=>:Worker1,
+             :arg_keys=>[:first_argument],
+             :subjob_id=>3,
+             :parent_id=>2,
+             :arg_values=>[10, 20],
+             :next_id=>4},
+           4=>
+            {:subworker_class=>:Worker2,
+             :arg_keys=>[:first_argument, :second_argument],
+             :subjob_id=>4,
+             :parent_id=>2,
+             :arg_values=>[10, 20]},
+           5=>
+            {:subjob_id=>5,
+             :subworker_class=>"batch_child",
+             :arg_keys=>[:first_argument, :second_argument],
+             :arg_values=>[11, 21],
+             :parent_id=>1},
+           6=>
+            {:subworker_class=>:Worker1,
+             :arg_keys=>[:first_argument],
+             :subjob_id=>6,
+             :parent_id=>5,
+             :arg_values=>[11, 21],
+             :next_id=>7},
+           7=>
+            {:subworker_class=>:Worker2,
+             :arg_keys=>[:first_argument, :second_argument],
+             :subjob_id=>7,
+             :parent_id=>5,
+             :arg_values=>[11, 21]},
+           8=>
+            {:subjob_id=>8,
+             :subworker_class=>"batch_child",
+             :arg_keys=>[:first_argument, :second_argument],
+             :arg_values=>[12, 22],
+             :parent_id=>1},
+           9=>
+            {:subworker_class=>:Worker1,
+             :arg_keys=>[:first_argument],
+             :subjob_id=>9,
+             :parent_id=>8,
+             :arg_values=>[12, 22],
+             :next_id=>10},
+           10=>
+            {:subworker_class=>:Worker2,
+             :arg_keys=>[:first_argument, :second_argument],
+             :subjob_id=>10,
+             :parent_id=>8,
+             :arg_values=>[12, 22]}}
       end
     end
 

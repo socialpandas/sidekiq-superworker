@@ -140,6 +140,30 @@ end
 MyBatchSuperworker.perform_async([30, 31, 32, 33, 34, 35])
 ```
 
+You can also use multiple arguments:
+
+```ruby
+Superworker.create(:MyBatchSuperworker, :user_ids, :comment_ids) do
+  batch user_ids: :user_id, comment_ids: :comment_id do
+    Worker1 :user_id, :comment_id
+    Worker2 :user_id
+  end
+end
+
+MyBatchSuperworker.perform_async([10, 11, 12], [20, 21, 22])
+```
+
+The above produces the a sequence equivalent to this (the workers run serially):
+
+```ruby
+Worker1.new.perform(10, 20)
+Worker2.new.perform(10)
+Worker1.new.perform(11, 21)
+Worker2.new.perform(11)
+Worker1.new.perform(12, 22)
+Worker2.new.perform(12)
+```
+
 Grouping jobs into batches greatly improves your ability to audit them and determine when batches have finished.
 
 ### Superjob Names

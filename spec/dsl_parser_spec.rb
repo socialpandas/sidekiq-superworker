@@ -8,7 +8,7 @@ describe Sidekiq::Superworker::DSLParser do
   end
 
   describe '.parse' do
-    context 'batch superworker' do
+    context 'batch superworker with one array argument' do
       it 'returns the correct nested hash' do
         block = proc do
           batch user_ids: :user_id do
@@ -25,6 +25,28 @@ describe Sidekiq::Superworker::DSLParser do
              :arg_keys=>[{:user_ids=>:user_id}],
              :children=>
               {2=>{:subworker_class=>:Worker1, :arg_keys=>[:user_id]},
+               3=>{:subworker_class=>:Worker2, :arg_keys=>[:user_id]},
+               4=>{:subworker_class=>:Worker3, :arg_keys=>[:user_id]}}}}
+      end
+    end
+
+    context 'batch superworker with two array arguments' do
+      it 'returns the correct nested hash' do
+        block = proc do
+          batch user_ids: :user_id, comment_ids: :comment_id do
+            Worker1 :comment_id
+            Worker2 :user_id
+            Worker3 :user_id
+          end
+        end
+        
+        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash.should ==
+          {1=>
+            {:subworker_class=>:batch,
+             :arg_keys=>[{:user_ids=>:user_id, :comment_ids=>:comment_id}],
+             :children=>
+              {2=>{:subworker_class=>:Worker1, :arg_keys=>[:comment_id]},
                3=>{:subworker_class=>:Worker2, :arg_keys=>[:user_id]},
                4=>{:subworker_class=>:Worker3, :arg_keys=>[:user_id]}}}}
       end

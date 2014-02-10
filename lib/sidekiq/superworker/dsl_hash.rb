@@ -141,12 +141,8 @@ module Sidekiq
         batch_keys_to_batch_values = @args.slice(*(batch_keys))
 
         batch_values = batch_keys_to_batch_values.values
-        first_batch_value = batch_values.pop
-        if batch_values.length > 0
-          batch_values = first_batch_value.zip(batch_values)
-        else
-          batch_values = first_batch_value.zip
-        end
+        first_batch_value = batch_values.shift
+        batch_values = first_batch_value.zip(*batch_values)
         batch_values
       end
     end
