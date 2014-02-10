@@ -8,7 +8,7 @@ describe Sidekiq::Superworker::DSLHash do
     @dsl_hash = Sidekiq::Superworker::DSLHash.new
   end
 
-  describe '.parse' do
+  describe '#nested_hash_to_records' do
     context 'batch superworker' do
       it 'returns the correct records' do
         block = proc do
