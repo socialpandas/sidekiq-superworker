@@ -17,7 +17,15 @@ module Sidekiq
           @dsl_hash = DSLHash.new
         end
 
-        Object.const_set(class_name, klass)
+        class_components = class_name.to_s.split('::')
+        class_name = class_components.pop
+        module_name = class_components.join('::')
+
+        if module_name.empty?
+          Object.const_set(class_name, klass)
+        else
+          module_name.constantize.const_set(class_name, klass)
+        end
       end
     end
   end
