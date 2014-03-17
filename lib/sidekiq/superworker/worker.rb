@@ -3,7 +3,7 @@ module Sidekiq
     class Worker
       def self.create(*args, &block)
         class_name = args.shift.to_sym
-        nested_hash = DSLParser.parse(block)
+        nested_hash = DSLParser.new.parse(block)
         create_class(class_name, args, nested_hash)
       end
 

@@ -36,7 +36,7 @@ describe Sidekiq::Superworker::DSLHash do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         args = {
           first_arguments: [10, 11, 12]
         }
@@ -118,7 +118,7 @@ describe Sidekiq::Superworker::DSLHash do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         args = {
           first_arguments: [10, 11, 12],
           second_arguments: [20, 21, 22]
@@ -208,7 +208,7 @@ describe Sidekiq::Superworker::DSLHash do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
 
         args = {
           first_arguments: [10, 11]
@@ -292,7 +292,7 @@ describe Sidekiq::Superworker::DSLHash do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
 
         args = {
           first_arguments: [10, 11]

@@ -8,7 +8,7 @@ describe Sidekiq::Superworker::Worker do
   end
 
   describe '.create' do
-    it 'creates a worker class' do
+    it 'creates a superworker class' do
       Sidekiq::Superworker::Worker.create(:MySuperworker) do
         Worker1()
       end
@@ -16,7 +16,7 @@ describe Sidekiq::Superworker::Worker do
       MySuperworker.ancestors.should include(Sidekiq::Superworker::WorkerClass)
     end
 
-    it 'creates a worker class within a module' do
+    it 'creates a superworker class within a module' do
       module MyModule; end
       Sidekiq::Superworker::Worker.create('MyModule::MySuperworker') do
         Worker1()
@@ -25,7 +25,7 @@ describe Sidekiq::Superworker::Worker do
       MyModule::MySuperworker.ancestors.should include(Sidekiq::Superworker::WorkerClass)
     end
 
-    it 'creates a worker class within a nested module' do
+    it 'creates a superworker class within a nested module' do
       module MyModule
         module MyNestedModule; end
       end

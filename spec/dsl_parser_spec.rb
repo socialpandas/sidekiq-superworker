@@ -7,7 +7,43 @@ describe Sidekiq::Superworker::DSLParser do
     create_dummy_workers
   end
 
-  describe '.parse' do
+  describe '#method_to_subworker_type' do
+    it 'preserves batch' do
+      Sidekiq::Superworker::DSLParser.new.method_to_subworker_type(:batch).should == :batch
+    end
+
+    it 'preserves parallel' do
+      Sidekiq::Superworker::DSLParser.new.method_to_subworker_type(:parallel).should == :parallel
+    end
+
+    it 'preserves a class name' do
+      Sidekiq::Superworker::DSLParser.new.method_to_subworker_type(:MyWorker).should == :MyWorker
+    end
+
+    it 'preserves two underscores if the class exists' do
+      class My__UnderscoredClass; end
+      Sidekiq::Superworker::DSLParser.new.method_to_subworker_type(:My__UnderscoredClass).should == 'My__UnderscoredClass'
+    end
+
+    it 'converts two underscores to a module specification if the module exists' do
+      module MyModule
+        class Worker1; end
+      end
+      Sidekiq::Superworker::DSLParser.new.method_to_subworker_type(:MyModule__Worker1).should == 'MyModule::Worker1'
+    end
+  end
+
+  describe '#parse' do
+    it 'calls method_to_subworker_type' do
+      block = proc do
+        Worker1 :user_id
+      end
+      
+      parser = Sidekiq::Superworker::DSLParser.new
+      parser.should_receive(:method_to_subworker_type).with(:Worker1).once
+      parser.parse(block)
+    end
+
     context 'batch superworker with one array argument' do
       it 'returns the correct nested hash' do
         block = proc do
@@ -18,7 +54,7 @@ describe Sidekiq::Superworker::DSLParser do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         nested_hash.should ==
           {1=>
             {:subworker_class=>:batch,
@@ -40,7 +76,7 @@ describe Sidekiq::Superworker::DSLParser do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         nested_hash.should ==
           {1=>
             {:subworker_class=>:batch,
@@ -66,7 +102,7 @@ describe Sidekiq::Superworker::DSLParser do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         nested_hash.should ==
           {1=>
             {:subworker_class=>:batch,
@@ -103,7 +139,7 @@ describe Sidekiq::Superworker::DSLParser do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         nested_hash.should ==
           {1=>
             {:subworker_class=>:Worker1,
@@ -152,7 +188,7 @@ describe Sidekiq::Superworker::DSLParser do
           end
           Worker1 :first_argument
         end
-        nested_hash = Sidekiq::Superworker::DSLParser.parse(block)
+        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         nested_hash.should ==
           {1=>
             {:subworker_class=>:parallel,
