@@ -3,7 +3,7 @@ module Sidekiq
     class Subjob < ActiveRecord::Base
       attr_accessible :jid, :subjob_id, :superjob_id, :parent_id, :children_ids, :next_id,
         :subworker_class, :superworker_class, :arg_keys, :arg_values, :status, :descendants_are_complete,
-        :meta if ActiveRecord::VERSION::MAJOR < 4
+        :meta if ActiveRecord::VERSION::MAJOR < 4 || ActiveRecord.constants.include?(:MassAssignmentSecurity)
 
       serialize :arg_keys
       serialize :arg_values
