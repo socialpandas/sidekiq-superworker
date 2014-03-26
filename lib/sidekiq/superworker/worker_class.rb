@@ -33,7 +33,7 @@ module Sidekiq
         end
 
         def create_subjobs(arg_values, options={})
-          records = @dsl_hash.nested_hash_to_records(@nested_hash, @args)
+          records = DSLHash.new(@nested_hash, @args).to_records
           records = records.collect do |id, record|
             record[:status] = 'initialized'
             record[:superjob_id] = @superjob_id

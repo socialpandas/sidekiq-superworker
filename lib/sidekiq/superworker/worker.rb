@@ -14,7 +14,6 @@ module Sidekiq
           @class_name = class_name
           @arg_keys = arg_keys
           @nested_hash = nested_hash
-          @dsl_hash = DSLHash.new
         end
 
         class_components = class_name.to_s.split('::')

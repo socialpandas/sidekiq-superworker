@@ -1,33 +1,27 @@
 module Sidekiq
   module Superworker
     class DSLHash
-      attr_accessor :record_id, :records
+      attr_accessor :record_id
 
-      def initialize
-        reset
-      end
-
-      def nested_hash_to_records(nested_hash, args)
-        reset
+      def initialize(hash, args={})
+        @hash = hash
         @args = args
-        nested_hash_to_records_recursive(nested_hash)
       end
 
-      def rewrite_ids_of_nested_hash(nested_hash, record_id)
-        reset
-        @record_id = record_id
-        rewrite_ids_of_nested_hash_recursive(nested_hash)
+      def rewrite_record_ids(first_record_id)
+        @record_id = first_record_id - 1
+        rewrite_ids_of_nested_hash(@hash)
+      end
+
+      def to_records
+        @record_id = 1
+        @records = {}
+        nested_hash_to_records(@hash)
       end
 
       private
 
-      def reset
-        @args = {}
-        @records = {}
-        @record_id = 1
-      end
-
-      def nested_hash_to_records_recursive(nested_hash, options={})
+      def nested_hash_to_records(nested_hash, options={})
         return @records if nested_hash.blank?
 
         defaults = {
@@ -70,22 +64,9 @@ module Sidekiq
             @records[parent_id][:children_ids] << id
           end
 
-          nested_hash_to_records_recursive(value[:children], parent_id: id, scoped_args: options[:scoped_args]) if value[:children] && value[:subworker_class] != :batch
+          nested_hash_to_records(value[:children], parent_id: id, scoped_args: options[:scoped_args]) if value[:children] && value[:subworker_class] != :batch
         end
         @records
-      end
-
-      def rewrite_ids_of_nested_hash_recursive(nested_hash)
-        new_hash = {}
-        nested_hash.each do |old_record_id, record|
-          @record_id += 1
-          parent_record_id = @record_id
-          new_hash[parent_record_id] = record
-          if record[:children]
-            new_hash[parent_record_id][:children] = rewrite_ids_of_nested_hash_recursive(record[:children])
-          end
-        end
-        new_hash
       end
 
       def children_ids_for_batch(subjobs, batch_keys_to_iteration_keys)
@@ -125,7 +106,7 @@ module Sidekiq
             @records[subjob_id] = subjob
             @records[last_subjob_id][:next_id] = subjob_id if last_subjob_id
             last_subjob_id = subjob_id
-            nested_hash_to_records_recursive(children, parent_id: subjob_id, scoped_args: iteration_args)
+            nested_hash_to_records(children, parent_id: subjob_id, scoped_args: iteration_args)
           end
 
           children_ids << batch_child_id
@@ -144,6 +125,19 @@ module Sidekiq
         first_batch_value = batch_values.shift
         batch_values = first_batch_value.zip(*batch_values)
         batch_values
+      end
+
+      def rewrite_ids_of_nested_hash(nested_hash)
+        new_hash = {}
+        nested_hash.each do |old_record_id, record|
+          @record_id += 1
+          parent_record_id = @record_id
+          new_hash[parent_record_id] = record
+          if record[:children]
+            new_hash[parent_record_id][:children] = rewrite_ids_of_nested_hash(record[:children])
+          end
+        end
+        new_hash
       end
     end
   end

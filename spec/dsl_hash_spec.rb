@@ -5,28 +5,49 @@ describe Sidekiq::Superworker::DSLHash do
 
   before :all do
     create_dummy_workers
-    @dsl_hash = Sidekiq::Superworker::DSLHash.new
   end
 
   describe '#get_batch_iteration_arg_value_arrays' do
     context 'one array argument' do
       it 'returns the arrays' do
-        @dsl_hash.instance_variable_set(:@args, { first_arguments: [10, 11, 12] })
-        arrays = @dsl_hash.send(:get_batch_iteration_arg_value_arrays, { first_arguments: :first_argument })
+        dsl_hash = Sidekiq::Superworker::DSLHash.new({})
+        dsl_hash.instance_variable_set(:@args, { first_arguments: [10, 11, 12] })
+        arrays = dsl_hash.send(:get_batch_iteration_arg_value_arrays, { first_arguments: :first_argument })
         arrays.should == [[10], [11], [12]]
       end
     end
 
     context 'two array arguments' do
       it 'returns the arrays' do
-        @dsl_hash.instance_variable_set(:@args, { first_arguments: [10, 11, 12], second_arguments: [20, 21, 22] })
-        arrays = @dsl_hash.send(:get_batch_iteration_arg_value_arrays, { first_arguments: :first_argument, second_arguments: :second_argument })
+        dsl_hash = Sidekiq::Superworker::DSLHash.new({})
+        dsl_hash.instance_variable_set(:@args, { first_arguments: [10, 11, 12], second_arguments: [20, 21, 22] })
+        arrays = dsl_hash.send(:get_batch_iteration_arg_value_arrays, { first_arguments: :first_argument, second_arguments: :second_argument })
         arrays.should == [[10, 20], [11, 21], [12, 22]]
       end
     end
   end
 
-  describe '#nested_hash_to_records' do
+  describe '#rewrite_record_ids' do
+    context 'hash with children' do
+      it 'rewrites the record ids' do
+        hash =
+          {1=>
+            {:subworker_class=>:Worker1,
+             :arg_keys=>[:first_argument],
+             :children=>{
+              2=>{:subworker_class=>:Worker2, :arg_keys=>[:first_argument]}}}}
+        dsl_hash = Sidekiq::Superworker::DSLHash.new(hash)
+        dsl_hash.rewrite_record_ids(5).should ==
+          {5=>
+            {:subworker_class=>:Worker1,
+             :arg_keys=>[:first_argument],
+             :children=>{
+              6=>{:subworker_class=>:Worker2, :arg_keys=>[:first_argument]}}}}
+      end
+    end
+  end
+
+  describe '#to_records' do
     context 'batch superworker with one array argument' do
       it 'returns the correct records' do
         block = proc do
@@ -35,13 +56,13 @@ describe Sidekiq::Superworker::DSLHash do
             Worker2 :first_argument
           end
         end
-        
-        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
+
+        hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         args = {
           first_arguments: [10, 11, 12]
         }
-        records = @dsl_hash.nested_hash_to_records(nested_hash, args)
-        records.should ==
+        dsl_hash = Sidekiq::Superworker::DSLHash.new(hash, args)
+        dsl_hash.to_records.should ==
           {1=>
             {:subjob_id=>1,
              :subworker_class=>"batch",
@@ -118,13 +139,13 @@ describe Sidekiq::Superworker::DSLHash do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
+        hash = Sidekiq::Superworker::DSLParser.new.parse(block)
         args = {
           first_arguments: [10, 11, 12],
           second_arguments: [20, 21, 22]
         }
-        records = @dsl_hash.nested_hash_to_records(nested_hash, args)
-        records.should ==
+        dsl_hash = Sidekiq::Superworker::DSLHash.new(hash, args)
+        dsl_hash.to_records.should ==
           {1=>
             {:subjob_id=>1,
              :subworker_class=>"batch",
@@ -208,13 +229,13 @@ describe Sidekiq::Superworker::DSLHash do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
+        hash = Sidekiq::Superworker::DSLParser.new.parse(block)
 
         args = {
           first_arguments: [10, 11]
         }
-        records = @dsl_hash.nested_hash_to_records(nested_hash, args)
-        records.should ==
+        dsl_hash = Sidekiq::Superworker::DSLHash.new(hash, args)
+        dsl_hash.to_records.should ==
           {1=>
             {:subjob_id=>1,
              :subworker_class=>"batch",
@@ -292,13 +313,13 @@ describe Sidekiq::Superworker::DSLHash do
           end
         end
         
-        nested_hash = Sidekiq::Superworker::DSLParser.new.parse(block)
+        hash = Sidekiq::Superworker::DSLParser.new.parse(block)
 
         args = {
           first_arguments: [10, 11]
         }
-        records = @dsl_hash.nested_hash_to_records(nested_hash, args)
-        records.should ==
+        dsl_hash = Sidekiq::Superworker::DSLHash.new(hash, args)
+        dsl_hash.to_records.should ==
           {1=>
             {:subjob_id=>1,
              :subworker_class=>"batch",

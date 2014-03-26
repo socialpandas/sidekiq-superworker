@@ -5,10 +5,9 @@ module Sidekiq
 
       def parse(block)
         @dsl_evaluator = DSLEvaluator.new
-        @dsl_hash = DSLHash.new
         @record_id = 0
         nested_hash = block_to_nested_hash(block)
-        @dsl_hash.rewrite_ids_of_nested_hash(nested_hash, 0)
+        DSLHash.new(nested_hash).rewrite_record_ids(1)
       end
 
       def block_to_nested_hash(block)
@@ -28,24 +27,20 @@ module Sidekiq
         subworker_type = method_to_subworker_type(method)
         @record_id += 1
         method_record_id = @record_id
-        if block
-          if subworker_type == :batch
-            nested_hash[@record_id] = { subworker_class: subworker_type, arg_keys: args, children: block_to_nested_hash(block) }
-          else
-            nested_hash[@record_id] = { subworker_class: subworker_type, arg_keys: args, children: block_to_nested_hash(block) }
-          end
-        else
-          nested_hash[@record_id] = { subworker_class: subworker_type, arg_keys: args }
-        end
+
+        record = { subworker_class: subworker_type, arg_keys: args }
+        record[:children] = block_to_nested_hash(block) if block
+        nested_hash[method_record_id] = record
 
         # For superworkers nested within other superworkers, we'll take the subworkers' nested_hash,
         # adjust their ids to fit in with our current @record_id value, and add them into the tree.
         unless [:parallel, :batch].include?(subworker_type)
           subworker_class = subworker_type.to_s.constantize
           if subworker_class.respond_to?(:is_a_superworker?) && subworker_class.is_a_superworker?
-            children = @dsl_hash.rewrite_ids_of_nested_hash(subworker_class.nested_hash, @record_id)
+            dsl_hash = DSLHash.new(subworker_class.nested_hash)
+            children = dsl_hash.rewrite_record_ids(@record_id + 1)
             set_children_for_record_id(nested_hash, method_record_id, children)
-            @record_id = @dsl_hash.record_id
+            @record_id = dsl_hash.record_id
           end
         end
       end
