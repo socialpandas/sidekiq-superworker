@@ -68,6 +68,28 @@ Install and run the migration:
 Usage
 -----
 
+First, define a superworker in a file that's included during the initialization of the app. If you're using Rails, you might do this in an initializer:
+
+```ruby
+# config/initializers/superworkers.rb
+
+Superworker.create(:MySuperworker, :user_id, :comment_id) do
+  Worker1 :user_id, :comment_id
+  Worker2 :comment_id
+end
+
+Superworker.create(:MyOtherSuperworker, :comment_id) do
+  Worker2 :comment_id
+  Worker3 :comment_id
+end
+```
+
+To run a superworker, call perform_async:
+
+```ruby
+MySuperworker.perform_async(23, 852)
+```
+
 ### Arguments
 
 You can define any number of arguments for the superworker and pass them to different subworkers as you see fit:
