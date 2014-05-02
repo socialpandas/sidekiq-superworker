@@ -395,5 +395,63 @@ describe Sidekiq::Superworker::DSLHash do
              :arg_values=>[11]}}
       end
     end
+
+    context 'nested batch superworker with batch and non-batch arguments' do
+      it 'returns the correct records' do
+        block = proc do
+          Worker1 :first_argument do
+            batch second_arguments: :second_argument do
+              Worker2 :first_argument, :second_argument
+            end
+          end
+        end
+
+        hash = Sidekiq::Superworker::DSLParser.new.parse(block)
+        args = {
+          first_argument: 20,
+          second_arguments: [10, 11],
+        }
+        dsl_hash = Sidekiq::Superworker::DSLHash.new(hash, args)
+        dsl_hash.to_records.should ==
+          {1=>
+            {:subjob_id=>1,
+             :subworker_class=>"Worker1",
+             :arg_keys=>[:first_argument],
+             :arg_values=>[20],
+             :parent_id=>nil,
+             :children_ids=>[2]},
+           2=>
+            {:subjob_id=>2,
+             :subworker_class=>"batch",
+             :arg_keys=>[{:second_arguments=>:second_argument}],
+             :arg_values=>[{:second_arguments=>:second_argument}],
+             :parent_id=>1,
+             :children_ids=>[3, 5]},
+           3=>
+            {:subjob_id=>3,
+             :subworker_class=>"batch_child",
+             :arg_keys=>[:first_argument, :second_argument],
+             :arg_values=>[20, 10],
+             :parent_id=>2},
+           4=>
+            {:subworker_class=>:Worker2,
+             :arg_keys=>[:first_argument, :second_argument],
+             :subjob_id=>4,
+             :parent_id=>3,
+             :arg_values=>[20, 10]},
+           5=>
+            {:subjob_id=>5,
+             :subworker_class=>"batch_child",
+             :arg_keys=>[:first_argument, :second_argument],
+             :arg_values=>[20, 11],
+             :parent_id=>2},
+           6=>
+            {:subworker_class=>:Worker2,
+             :arg_keys=>[:first_argument, :second_argument],
+             :subjob_id=>6,
+             :parent_id=>5,
+             :arg_values=>[20, 11]}}
+      end
+    end
   end
 end

@@ -53,7 +53,9 @@ module Sidekiq
             parent_id: parent_id
           }
           if value[:subworker_class] == :batch
-            @records[id][:children_ids] = children_ids_for_batch(value[:children], arg_values[0])
+            @arg_keys_to_arg_keys ||= Hash[@args.keys.map { |key| [key, key] }]
+            batch_keys_to_iteration_keys = @arg_keys_to_arg_keys.merge(arg_values[0])
+            @records[id][:children_ids] = children_ids_for_batch(value[:children], batch_keys_to_iteration_keys)
           end
 
           @records[last_id][:next_id] = id if @records[last_id]
@@ -120,11 +122,8 @@ module Sidekiq
       def get_batch_iteration_arg_value_arrays(batch_keys_to_iteration_keys)
         batch_keys = batch_keys_to_iteration_keys.keys
         batch_keys_to_batch_values = @args.slice(*(batch_keys))
-
         batch_values = batch_keys_to_batch_values.values
-        first_batch_value = batch_values.shift
-        batch_values = first_batch_value.zip(*batch_values)
-        batch_values
+        batch_values_to_batch_arrays(batch_values)
       end
 
       def rewrite_ids_of_nested_hash(nested_hash)
@@ -138,6 +137,20 @@ module Sidekiq
           end
         end
         new_hash
+      end
+
+      def batch_values_to_batch_arrays(values)
+        arrays = values.map { |value| value.is_a?(Array) ? value : [value] }
+        max_length = arrays.map(&:length).max
+        arrays.map! do |array|
+          if array.length < max_length
+            repetition_count = (max_length / array.length).ceil
+            array = (array * repetition_count).take(max_length)
+          end
+          array
+        end
+        first_array = arrays.shift
+        first_array.zip(*arrays)
       end
     end
   end
