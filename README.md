@@ -139,7 +139,6 @@ When a superjob is queued, records for all of its subjobs are created. By defaul
 ```ruby
 # config/initializers/superworker.rb
 Sidekiq::Superworker.options[:insert_method] = :multiple
-
 ```
 
 ### Logging
