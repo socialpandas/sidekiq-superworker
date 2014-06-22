@@ -120,6 +120,16 @@ Superworker.create(:MySuperworker, :user_id, :comment_id) do
 end
 ```
 
+### Namespaced Workers
+
+To refer to a namespaced worker (e.g. `MyModule::Worker1`), replace the two colons with two underscores:
+
+```ruby
+Superworker.create(:MySuperworker, :user_id, :comment_id) do
+  MyModule__Worker1 :user_id, :comment_id
+end
+```
+
 ### Options
 
 #### Insert Method
