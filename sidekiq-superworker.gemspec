@@ -3,7 +3,7 @@ require File.expand_path('../lib/sidekiq/superworker/version', __FILE__)
 Gem::Specification.new do |s|
   s.authors       = ['Tom Benner']
   s.email         = ['tombenner@gmail.com']
-  s.description = s.summary = %q{Chain together Sidekiq workers in parallel and/or serial configurations}
+  s.description = s.summary = %q{Define dependency graphs of Sidekiq jobs}
   s.homepage      = 'https://github.com/socialpandas/sidekiq-superworker'
 
   s.files         = Dir['{lib}/**/*'] + ['MIT-LICENSE', 'Rakefile', 'README.md']

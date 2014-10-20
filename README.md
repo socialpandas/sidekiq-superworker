@@ -1,13 +1,13 @@
 Sidekiq Superworker
 ===================
-Chain together Sidekiq workers in parallel and/or serial configurations
+Define dependency graphs of Sidekiq jobs
 
 Overview
 --------
 
-Sidekiq Superworker lets you create superworkers, which are simple or complex chains of Sidekiq workers.
+Sidekiq Superworker lets you create superworkers, which are simple or complex graphs of Sidekiq workers.
 
-For example, you can define complex chains of workers, and even use parallel blocks:
+For example, you can define complex graphs of workers and use both serial and parallel worker configurations:
 
 [![](https://raw.github.com/socialpandas/sidekiq-superworker/master/doc/diagram-complex.png)](https://raw.github.com/socialpandas/sidekiq-superworker/master/doc/diagram-complex.png)
 
@@ -41,7 +41,7 @@ And you can run it like any other worker:
 MySuperworker.perform_async(23, 852)
 ```
 
-You can also define simple serial chains of workers:
+You can also define simple serial sequences of workers:
 
 [![](https://raw.github.com/socialpandas/sidekiq-superworker/master/doc/diagram-simple.png)](https://raw.github.com/socialpandas/sidekiq-superworker/master/doc/diagram-simple.png)
 
