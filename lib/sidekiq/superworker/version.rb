@@ -1,5 +1,5 @@
 module Sidekiq
   module Superworker
-    VERSION = '0.1.9'
+    VERSION = '1.0.0'
   end
 end

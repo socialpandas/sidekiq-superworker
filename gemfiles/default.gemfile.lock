@@ -1,7 +1,7 @@
 PATH
   remote: ../
   specs:
-    sidekiq-superworker (0.1.9)
+    sidekiq-superworker (1.0.0)
       activemodel (>= 3.2)
       activesupport (>= 3.2)
       sidekiq (>= 2.1.0)
