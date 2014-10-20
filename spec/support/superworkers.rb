@@ -26,14 +26,14 @@ class FailingWorker
 end
 
 # For testing simple superworker properties
-Sidekiq::Superworker::Worker.create(:SimpleSuperworker, :first_argument, :second_argument) do
+Sidekiq::Superworker::Worker.define(:SimpleSuperworker, :first_argument, :second_argument) do
   Worker1 :first_argument
   Worker2 :second_argument
 end
 
 
 # For testing complex blocks
-Sidekiq::Superworker::Worker.create(:ComplexSuperworker, :first_argument, :second_argument) do
+Sidekiq::Superworker::Worker.define(:ComplexSuperworker, :first_argument, :second_argument) do
   Worker1 :first_argument do       # 1
     Worker2 :second_argument       # 2
     Worker3 :second_argument do    # 3
@@ -51,7 +51,7 @@ Sidekiq::Superworker::Worker.create(:ComplexSuperworker, :first_argument, :secon
 end
 
 # For testing batch blocks
-Sidekiq::Superworker::Worker.create(:BatchSuperworker, :user_ids) do
+Sidekiq::Superworker::Worker.define(:BatchSuperworker, :user_ids) do
   batch user_ids: :user_id do
     Worker1 :user_id
     Worker2 :user_id
@@ -59,25 +59,25 @@ Sidekiq::Superworker::Worker.create(:BatchSuperworker, :user_ids) do
 end
 
 # For testing empty arguments
-Sidekiq::Superworker::Worker.create(:EmptyArgumentsSuperworker) do
+Sidekiq::Superworker::Worker.define(:EmptyArgumentsSuperworker) do
   Worker1 do
     Worker2()
   end
 end
 
 # For testing nested superworkers
-Sidekiq::Superworker::Worker.create(:ChildSuperworker) do
+Sidekiq::Superworker::Worker.define(:ChildSuperworker) do
   Worker2 do
     Worker3()
   end
 end
-Sidekiq::Superworker::Worker.create(:NestedSuperworker) do
+Sidekiq::Superworker::Worker.define(:NestedSuperworker) do
   Worker1()
   ChildSuperworker()
 end
 
 # For testing exceptions
-Sidekiq::Superworker::Worker.create(:FailingSuperworker, :first_argument) do
+Sidekiq::Superworker::Worker.define(:FailingSuperworker, :first_argument) do
   Worker1 :first_argument do        # 1
     parallel do                     # 2
       FailingWorker :first_argument # 3

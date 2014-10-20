@@ -1,15 +1,19 @@
 module Sidekiq
   module Superworker
     class Worker
-      def self.create(*args, &block)
+      def self.define(*args, &block)
         class_name = args.shift.to_sym
         nested_hash = DSLParser.new.parse(block)
-        create_class(class_name, args, nested_hash)
+        define_class(class_name, args, nested_hash)
+      end
+
+      def self.create(*args, &block)
+        raise NoMethodError.new("Superworker.create has been replaced by Superworker.define.\nPlease see 'Upgrading to 1.x' at https://github.com/socialpandas/sidekiq-superworker.\nSuperworker.create called at #{caller[0]}")
       end
 
       protected
 
-      def self.create_class(class_name, arg_keys, nested_hash)
+      def self.define_class(class_name, arg_keys, nested_hash)
         klass = Class.new(Sidekiq::Superworker::WorkerClass) do
           @class_name = class_name
           @arg_keys = arg_keys

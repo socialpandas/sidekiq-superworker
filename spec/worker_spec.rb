@@ -3,9 +3,9 @@ require 'spec_helper'
 describe Sidekiq::Superworker::Worker do
   include Sidekiq::Superworker::WorkerHelpers
 
-  describe '.create' do
+  describe '.define' do
     it 'creates a superworker class' do
-      described_class.create(:MySuperworker) do
+      described_class.define(:MySuperworker) do
         Worker1()
       end
       MySuperworker.should be_a(Class)
@@ -14,7 +14,7 @@ describe Sidekiq::Superworker::Worker do
 
     it 'creates a superworker class within a module' do
       module MyModule; end
-      described_class.create('MyModule::MySuperworker') do
+      described_class.define('MyModule::MySuperworker') do
         Worker1()
       end
       MyModule::MySuperworker.should be_a(Class)
@@ -25,7 +25,7 @@ describe Sidekiq::Superworker::Worker do
       module MyModule
         module MyNestedModule; end
       end
-      described_class.create('MyModule::MyNestedModule::MySuperworker') do
+      described_class.define('MyModule::MyNestedModule::MySuperworker') do
         Worker1()
       end
       MyModule::MyNestedModule::MySuperworker.should be_a(Class)

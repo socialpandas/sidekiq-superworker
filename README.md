@@ -14,7 +14,7 @@ For example, you can define complex chains of workers, and even use parallel blo
 *(Worker10 will run after Worker5, Worker7, Worker8, and Worker9 have all completed.)*
 
 ```ruby
-Superworker.create(:MySuperworker, :user_id, :comment_id) do
+Superworker.define(:MySuperworker, :user_id, :comment_id) do
   Worker1 :user_id
   Worker2 :user_id do
     parallel do
@@ -46,7 +46,7 @@ You can also define simple serial chains of workers:
 [![](https://raw.github.com/socialpandas/sidekiq-superworker/master/doc/diagram-simple.png)](https://raw.github.com/socialpandas/sidekiq-superworker/master/doc/diagram-simple.png)
 
 ```ruby
-Superworker.create(:MySuperworker, :user_id, :comment_id) do
+Superworker.define(:MySuperworker, :user_id, :comment_id) do
   Worker1 :user_id, :comment_id
   Worker2 :comment_id
   Worker3 :user_id
@@ -68,12 +68,12 @@ First, define a superworker in a file that's included during the initialization 
 ```ruby
 # config/initializers/superworkers.rb
 
-Superworker.create(:MySuperworker, :user_id, :comment_id) do
+Superworker.define(:MySuperworker, :user_id, :comment_id) do
   Worker1 :user_id, :comment_id
   Worker2 :comment_id
 end
 
-Superworker.create(:MyOtherSuperworker, :comment_id) do
+Superworker.define(:MyOtherSuperworker, :comment_id) do
   Worker2 :comment_id
   Worker3 :comment_id
 end
@@ -90,7 +90,7 @@ MySuperworker.perform_async(23, 852)
 You can define any number of arguments for the superworker and pass them to different subworkers as you see fit:
 
 ```ruby
-Superworker.create(:MySuperworker, :user_id, :comment_id) do
+Superworker.define(:MySuperworker, :user_id, :comment_id) do
   Worker1 :user_id, :comment_id
   Worker2 :comment_id
   Worker3 :user_id
@@ -100,7 +100,7 @@ end
 If you want to set any static arguments for the subworkers, you can do that by using any values that are not symbols (e.g. strings, integers, etc):
 
 ```ruby
-Superworker.create(:MySuperworker, :user_id, :comment_id) do
+Superworker.define(:MySuperworker, :user_id, :comment_id) do
   Worker1 100, :user_id, :comment_id
   Worker2 'all'
 end
@@ -109,7 +109,7 @@ end
 If a subworker doesn't take any arguments, you'll need to include parentheses after it:
 
 ```ruby
-Superworker.create(:MySuperworker, :user_id, :comment_id) do
+Superworker.define(:MySuperworker, :user_id, :comment_id) do
   Worker1 :user_id, :comment_id
   Worker2()
 end
@@ -120,7 +120,7 @@ end
 To refer to a namespaced worker (e.g. `MyModule::Worker1`), replace the two colons with two underscores:
 
 ```ruby
-Superworker.create(:MySuperworker, :user_id, :comment_id) do
+Superworker.define(:MySuperworker, :user_id, :comment_id) do
   MyModule__Worker1 :user_id, :comment_id
 end
 ```
@@ -156,7 +156,7 @@ Using [sidekiq_monitor](https://github.com/socialpandas/sidekiq_monitor) with Si
 By using a `batch` block, you can create batches of subjobs that are all associated with the superjob. The following will run Worker1 and Worker2 in serial for every user ID in the array passed to perform_async.
 
 ```ruby
-Superworker.create(:MyBatchSuperworker, :user_ids) do
+Superworker.define(:MyBatchSuperworker, :user_ids) do
   batch user_ids: :user_id do
     Worker1 :user_id
     Worker2 :user_id
@@ -169,7 +169,7 @@ MyBatchSuperworker.perform_async([30, 31, 32, 33, 34, 35])
 You can also use multiple arguments:
 
 ```ruby
-Superworker.create(:MyBatchSuperworker, :user_ids, :comment_ids) do
+Superworker.define(:MyBatchSuperworker, :user_ids, :comment_ids) do
   batch user_ids: :user_id, comment_ids: :comment_id do
     Worker1 :user_id, :comment_id
     Worker2 :user_id
@@ -218,6 +218,10 @@ If you were previously using Sidekiq Superworker 0.x and are upgrading to 1.x, t
 ### Redis replaced ActiveRecord
 
 ActiveRecord was used as the datastore in 0.x due to application-specific requirements, but Redis is a far better choice for many reasons, especially given that Sidekiq uses Redis. When upgrading to 1.x, you'll need to let all of your superjobs complete, then upgrade to 1.x, then resume running superjobs. You can drop the 'sidekiq_superworker_subjobs' table, if you like.
+
+### Superworker.define replaced Superworker.create
+
+The name of the `Superworker.create` method caused confusion, as some users would call it multiple times. Since it defines a class, it's been renamed to `Superworker.define`. You'll need to replace it accordingly.
 
 Testing
 -------

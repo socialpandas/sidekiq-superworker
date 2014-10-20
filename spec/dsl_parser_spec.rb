@@ -87,7 +87,7 @@ describe Sidekiq::Superworker::DSLParser do
 
     context 'batch superworker with nested superworker' do
       it 'returns the correct nested hash' do
-        Sidekiq::Superworker::Worker.create(:BatchChildSuperworker, :user_id) do
+        Sidekiq::Superworker::Worker.define(:BatchChildSuperworker, :user_id) do
           Worker2 :user_id do
             Worker3 :user_id
           end
@@ -167,7 +167,7 @@ describe Sidekiq::Superworker::DSLParser do
 
     context 'nested parallel superworker' do
       it 'returns the correct records' do
-        Sidekiq::Superworker::Worker.create(:Superworker1, :first_argument) do
+        Sidekiq::Superworker::Worker.define(:Superworker1, :first_argument) do
           Worker2 :first_argument do
             Worker3 :first_argument
           end
