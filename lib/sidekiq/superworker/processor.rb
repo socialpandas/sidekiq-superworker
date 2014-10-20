@@ -11,7 +11,7 @@ module Sidekiq
         raise "Job has nil jid: #{item}" if item['jid'].nil?
 
         Superworker.debug "JID ##{item['jid']}: Error thrown"
-        subjob = find_subjob_by_jid(item['jid'])
+        subjob = Subjob.find_by_jid(item['jid'])
         SubjobProcessor.error(subjob, worker, item, exception) if subjob
       end
 
@@ -21,15 +21,8 @@ module Sidekiq
         raise "Job has nil jid: #{item}" if item['jid'].nil?
 
         Superworker.debug "JID ##{item['jid']}: Passing job from Sidekiq to Superworker"
-        subjob = find_subjob_by_jid(item['jid'])
+        subjob = Subjob.find_by_jid(item['jid'])
         SubjobProcessor.complete(subjob) if subjob
-      end
-
-      # Note: The job may've been created outside of sidekiq-superworker, so a nil return value
-      # for this method isn't necessarily problematic
-      def find_subjob_by_jid(jid)
-        Superworker.debug "JID ##{jid}: Finding Subjob"
-        Subjob.find_by_jid(jid)
       end
     end
   end

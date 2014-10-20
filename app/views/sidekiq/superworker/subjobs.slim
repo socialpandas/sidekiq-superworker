@@ -1,15 +1,13 @@
-- subjobs = Sidekiq::Superworker::Subjob.where(superjob_id: job.jid).where('subworker_class != ?', 'batch').order('subjob_id')
+- subjobs = Sidekiq::Superworker::Subjob.find_by_superjob_jid(job.jid).sort_by(&:subjob_id)
 
 table.table.table-condensed.table-striped.table-hover
   tr
-    th ID
     th Class
     th Args
     th Status
     th JID
   - subjobs.each do |subjob|
     tr
-      td = subjob.id
       td = subjob.subworker_class
       td = subjob.arg_values
       td = subjob.status

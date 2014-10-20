@@ -26,13 +26,15 @@ module Sidekiq
         end
 
         # Enqueue the first root-level subjob
-        first_subjob = subjobs.select{ |subjob| subjob.parent_id.nil? }.first
+        first_subjob = subjobs.find { |subjob| subjob.parent_id.nil? }
         SubjobProcessor.enqueue(first_subjob)
       end
 
       def self.complete(superjob_id)
         Superworker.debug "Superworker ##{superjob_id}: Complete"
 
+        Subjob.delete_subjobs_for(superjob_id) if Superworker.options[:delete_subjobs_after_superjob_completes]
+        
         # Set the superjob Sidekiq::Monitor::Job as being complete
         if defined?(Sidekiq::Monitor)
           job = Sidekiq::Monitor::Job.where(queue: queue_name, jid: superjob_id).first

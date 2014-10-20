@@ -60,11 +60,6 @@ Include it in your Gemfile:
 
     gem 'sidekiq-superworker'
 
-Install and run the migration:
-
-    rails g sidekiq:superworker:install
-    rake db:migrate
-
 Usage
 -----
 
@@ -132,13 +127,13 @@ end
 
 ### Options
 
-#### Insert Method
+#### Delete subjobs after their superjob completes
 
-When a superjob is queued, records for all of its subjobs are created. By default, each subjob record will be created using a separate insert query. If you're creating superjobs with large numbers of subjobs and want to improve performance, you can create these records using a multiple insert query instead. To this, set `:insert_method` to `:multiple`:
+When a superjob is queued, records for all of its subjobs are created. By default these records are deleted when the superjob finished. This can be changed by setting the following option to false:
 
 ```ruby
 # config/initializers/superworker.rb
-Sidekiq::Superworker.options[:insert_method] = :multiple
+Sidekiq::Superworker.options[:delete_subjobs_after_superjob_completes] = false
 ```
 
 ### Logging
@@ -154,7 +149,7 @@ Sidekiq::Superworker::Logging.logger = logger
 
 ### Monitoring
 
-Using [sidekiq_monitor](https://github.com/socialpandas/sidekiq_monitor) with Sidekiq Superworker is strongly encouraged, as it lets you easily monitor when a superjob is running, when it has finished, whether it has encountered errors, and the status of all of its subjobs.
+Using [sidekiq_monitor](https://github.com/socialpandas/sidekiq_monitor) with Sidekiq Superworker is encouraged, as it lets you easily monitor when a superjob is running, when it has finished, whether it has encountered errors, and the status of all of its subjobs.
 
 ### Batch Jobs
 
@@ -214,6 +209,24 @@ MySuperworker.perform_async(23, name: 'My job name')
 If a subjob encounters an exception, the subjobs that depend on it won't run, but the rest of the subjobs will continue as usual.
 
 If sidekiq_monitor is being used, the exception will be bubbled up to the superjob, which lets you easily see when your superjobs have failed.
+
+Upgrading to 1.x
+----------------
+
+If you were previously using Sidekiq Superworker 0.x and are upgrading to 1.x, there are some changes to be aware of:
+
+### Redis replaced ActiveRecord
+
+ActiveRecord was used as the datastore in 0.x due to application-specific requirements, but Redis is a far better choice for many reasons, especially given that Sidekiq uses Redis. When upgrading to 1.x, you'll need to let all of your superjobs complete, then upgrade to 1.x, then resume running superjobs. You can drop the 'sidekiq_superworker_subjobs' table, if you like.
+
+Testing
+-------
+
+Sidekiq Superworker is tested against multiple sets of gem dependencies (currently: no gems, Rails 3, and Rails 4), so please run the tests with [Appraisal](https://github.com/thoughtbot/appraisal) before submitting a PR. Thanks!
+
+```bash
+appraisal rspec
+```
 
 License
 -------

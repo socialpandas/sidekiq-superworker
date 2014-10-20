@@ -91,7 +91,8 @@ module Sidekiq
             subworker_class: 'batch_child',
             arg_keys: iteration_keys,
             arg_values: iteration_args.values,
-            parent_id: batch_id
+            parent_id: batch_id,
+            children_ids: []
           }
           @records[batch_child_id] = batch_child
 
@@ -109,6 +110,7 @@ module Sidekiq
             @records[last_subjob_id][:next_id] = subjob_id if last_subjob_id
             last_subjob_id = subjob_id
             nested_hash_to_records(children, parent_id: subjob_id, scoped_args: iteration_args)
+            batch_child[:children_ids] << subjob_id
           end
 
           children_ids << batch_child_id

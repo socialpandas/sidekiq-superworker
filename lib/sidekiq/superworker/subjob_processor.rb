@@ -38,9 +38,8 @@ module Sidekiq
               # the job fires off. If the job started first, it could finish before the ActiveRecord update
               # transaction completes, causing a race condition when finding the ActiveRecord record in
               # Processor#complete.
-              jid = SecureRandom.hex(12)
+              jid = subjob.jid
               subjob.update_attributes(
-                jid: jid,
                 status: 'queued'
               )
               enqueue_in_sidekiq(subjob, klass, jid)

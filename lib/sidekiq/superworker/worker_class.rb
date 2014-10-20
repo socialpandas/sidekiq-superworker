@@ -12,6 +12,7 @@ module Sidekiq
           options = initialize_superjob(arg_values)
           subjobs = create_subjobs(arg_values, options)
           SuperjobProcessor.create(@superjob_id, @class_name, arg_values, subjobs, options)
+          @superjob_id
         end
 
         protected
@@ -48,19 +49,8 @@ module Sidekiq
             end
             record
           end
-
-          insert_subjobs(records)
-        end
-
-        def insert_subjobs(records)
-          if Sidekiq::Superworker.options[:insert_method] == :multiple
-            subjobs = records.collect { |record| Sidekiq::Superworker::Subjob.new(record) }
-            Sidekiq::Superworker::Subjob.import(subjobs)
-            Sidekiq::Superworker::Subjob.where(superjob_id: @superjob_id).order(:subjob_id)
-          else
-            Sidekiq::Superworker::Subjob.transaction do
-              Sidekiq::Superworker::Subjob.create(records)
-            end
+          Sidekiq::Superworker::Subjob.transaction do
+            Sidekiq::Superworker::Subjob.create(records)
           end
         end
       end
