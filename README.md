@@ -179,7 +179,7 @@ end
 MyBatchSuperworker.perform_async([10, 11, 12], [20, 21, 22])
 ```
 
-The above produces the a sequence equivalent to this (the workers run serially):
+The above produces a sequence equivalent to this (the workers run serially):
 
 ```ruby
 Worker1.new.perform(10, 20)
