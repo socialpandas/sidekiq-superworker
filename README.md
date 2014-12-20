@@ -129,7 +129,7 @@ end
 
 #### Delete subjobs after their superjob completes
 
-When a superjob is queued, records for all of its subjobs are created. By default these records are deleted when the superjob finished. This can be changed by setting the following option to false:
+When a superjob is queued, records for all of its subjobs are created. By default, these records are deleted after the superjob completes. This can be changed by setting the following option to false:
 
 ```ruby
 # config/initializers/superworker.rb
