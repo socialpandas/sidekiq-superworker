@@ -68,6 +68,7 @@ describe Sidekiq::Superworker::Subjob do
     it 'returns the count of all subjobs' do
       subjobs = 3.times.map { |i| create_subjob({ subjob_id: i }) }
       described_class.count.should == 3
+
     end
   end
 
