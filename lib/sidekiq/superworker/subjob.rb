@@ -92,7 +92,7 @@ module Sidekiq
       def initialize(params={})
         if params.present?
           params.each do |attribute, value|
-            self.public_send("#{attribute}=", value)
+            public_send("#{attribute}=", value)
           end
           Sidekiq.redis do |conn|
             conn.sadd("#{self.class.redis_prefix}:#{superjob_id}:subjob_keys", "#{self.class.redis_prefix}:#{superjob_id}:#{subjob_id}")
@@ -109,12 +109,12 @@ module Sidekiq
       end
 
       def update_attributes(pairs = {})
-        pairs.each_pair { |attribute, value| send("#{attribute}=", value) }
+        pairs.each_pair { |attribute, value| public_send("#{attribute}=", value) }
         self.save
       end
 
       def update_attribute(attribute, value)
-        send("#{attribute.to_s}=", value)
+        public_send("#{attribute.to_s}=", value)
         return false unless self.valid?
         Sidekiq.redis do |conn|
           conn.hset(key, attribute.to_s, value.to_json)
@@ -159,7 +159,7 @@ module Sidekiq
       def to_param
         param = {}
         ATTRIBUTES.each do |attribute|
-          param["#{attribute.to_s}".to_sym] = send(attribute).to_json
+          param["#{attribute.to_s}".to_sym] = public_send(attribute).to_json
         end
         param
       end
