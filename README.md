@@ -210,16 +210,22 @@ If a subjob encounters an exception, the subjobs that depend on it won't run, bu
 
 If sidekiq_monitor is being used, the exception will be bubbled up to the superjob, which lets you easily see when your superjobs have failed.
 
-Upgrading to 1.x
-----------------
+Upgrade Notes
+-------------
+
+### Upgrading from 1.0.x to 1.1.x while using Sidekiq Monitor
+
+If you're using Sidekiq Monitor, were previously using Sidekiq Superworker 1.0.x, and are upgrading to 1.1.x, you should be aware that the strategy for storing subjob IDs has changed. Before upgrading, you should let all of your superworkers finish, then upgrade, then resume running your superworkers. For superjobs that ran before the upgrade, the relationship between superjobs and subjobs will no longer be shown in some parts of the UI. If you're not using Sidekiq Monitor, you can upgrade without any interruption.
+
+### Upgrading from 0.x to 1.x
 
 If you were previously using Sidekiq Superworker 0.x and are upgrading to 1.x, there are some changes to be aware of:
 
-### Redis replaced ActiveRecord
+#### Redis replaced ActiveRecord
 
 ActiveRecord was used as the datastore in 0.x due to application-specific requirements, but Redis is a far better choice for many reasons, especially given that Sidekiq uses Redis. When upgrading to 1.x, you'll need to let all of your superjobs complete, then upgrade to 1.x, then resume running superjobs. You can drop the 'sidekiq_superworker_subjobs' table, if you like.
 
-### Superworker.define replaced Superworker.create
+#### Superworker.define replaced Superworker.create
 
 The name of the `Superworker.create` method caused confusion, as some users would call it multiple times. Since it defines a class, it's been renamed to `Superworker.define`. You'll need to replace it accordingly.
 
