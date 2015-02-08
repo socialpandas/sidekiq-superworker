@@ -42,7 +42,7 @@ module Sidekiq
 
         def find_by_superjob_jid(jid)
           keys = Sidekiq.redis do |conn|
-            conn.smembers("#{redis_prefix}:#{jid}:members")
+            conn.smembers("#{redis_prefix}:#{jid}:subjob_keys")
           end
           keys.collect { |key| find_by_key(key) }
         end
@@ -57,16 +57,16 @@ module Sidekiq
 
         def keys
           Sidekiq.redis do |conn|
-            keys = conn.keys("#{redis_prefix}:*:members")
+            keys = conn.keys("#{redis_prefix}:*:subjob_keys")
             keys.collect {|key| conn.smembers(key)}.flatten
           end
         end
 
         def delete_subjobs_for(superjob_id)
           Sidekiq.redis do |conn|
-            keys = conn.smembers("#{redis_prefix}:#{superjob_id}:members")
+            keys = conn.smembers("#{redis_prefix}:#{superjob_id}:subjob_keys")
             conn.del(keys) if keys.any?
-            conn.del("#{redis_prefix}:#{superjob_id}:members")
+            conn.del("#{redis_prefix}:#{superjob_id}:subjob_keys")
           end
         end
 
@@ -95,7 +95,7 @@ module Sidekiq
             self.public_send("#{attribute}=", value)
           end
           Sidekiq.redis do |conn|
-            conn.sadd("#{self.class.redis_prefix}:#{superjob_id}:members", "#{self.class.redis_prefix}:#{superjob_id}:#{subjob_id}")
+            conn.sadd("#{self.class.redis_prefix}:#{superjob_id}:subjob_keys", "#{self.class.redis_prefix}:#{superjob_id}:#{subjob_id}")
           end
         end
       end
