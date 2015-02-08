@@ -58,7 +58,7 @@ module Sidekiq
         def keys
           Sidekiq.redis do |conn|
             keys = conn.keys("#{redis_prefix}:*:subjob_keys")
-            keys.collect {|key| conn.smembers(key)}.flatten
+            keys.collect { |key| conn.smembers(key) }.flatten
           end
         end
 
