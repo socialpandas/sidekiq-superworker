@@ -99,7 +99,7 @@ describe Sidekiq::Superworker::Worker do
              :descendants_are_complete=>false}}
 
         record_hashes = subjobs_to_indexed_hash(Sidekiq::Superworker::Subjob.all)
-        record_hashes.should have(expected_record_hashes.length).items
+        record_hashes.length.should eq(expected_record_hashes.length)
         record_hashes.each do |subjob_id, record_hash|
           expected_record_hashes[subjob_id].should == record_hash
         end
@@ -142,7 +142,7 @@ describe Sidekiq::Superworker::Worker do
         }
         record_hashes = subjobs_to_indexed_hash(Sidekiq::Superworker::Subjob.all)
 
-        record_hashes.should have(expected_record_hashes.length).items
+        record_hashes.length.should eq(expected_record_hashes.length)
         record_hashes.each do |subjob_id, record_hash|
           expected_record_hashes[subjob_id].should == record_hash
         end
@@ -208,7 +208,7 @@ describe Sidekiq::Superworker::Worker do
 
         record_hashes = subjobs_to_indexed_hash(Sidekiq::Superworker::Subjob.all)
 
-        record_hashes.should have(expected_record_hashes.length).items
+        record_hashes.length.should eq(expected_record_hashes.length)
         record_hashes.each do |subjob_id, record_hash|
           expected_record_hashes[subjob_id].should == record_hash
         end
@@ -340,7 +340,7 @@ describe Sidekiq::Superworker::Worker do
 
         record_hashes = subjobs_to_indexed_hash(Sidekiq::Superworker::Subjob.all)
 
-        record_hashes.should have(expected_record_hashes.length).items
+        record_hashes.length.should eq(expected_record_hashes.length)
         record_hashes.each do |subjob_id, record_hash|
           expected_record_hashes[subjob_id].should == record_hash
         end
@@ -359,7 +359,7 @@ describe Sidekiq::Superworker::Worker do
         jobs = @queue.to_a
         first_job = jobs.first
 
-        jobs.should have(1).items
+        jobs.count.should eq(1)
         first_job.klass.should == 'Worker1'
         first_job.args.should == [100]
       end
