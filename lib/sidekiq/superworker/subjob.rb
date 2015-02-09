@@ -140,12 +140,12 @@ module Sidekiq
 
       def children
         return [] if children_ids.blank?
-        children = children_ids.collect { |id| self.class.find_by_jid(self.class.jid(superjob_id,id)) }
+        children = children_ids.collect { |id| self.class.find_by_jid(self.class.jid(superjob_id, id)) }
         children.reject(&:nil?)
       end
 
       def next
-        self.class.find_by_jid(self.class.jid(superjob_id,next_id))
+        self.class.find_by_jid(self.class.jid(superjob_id, next_id))
       end
 
       def ==(other)
