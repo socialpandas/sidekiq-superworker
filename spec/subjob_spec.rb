@@ -72,6 +72,38 @@ describe Sidekiq::Superworker::Subjob do
     end
   end
 
+  describe '#save' do
+    it 'creates a hashmap in redis' do
+      subjob = described_class.new(attributes)
+      subjob.save
+      Sidekiq.redis do |conn|
+        expect(conn.hkeys(subjob.key)).to eq(subjob.to_param.keys.map(&:to_s))
+      end
+    end
+
+    context 'superjob_expiration is set' do
+      it "sets the subjobs expiry accordingly" do
+        allow(Sidekiq::Superworker).to receive("options") {{subjob_redis_prefix: 'subjob',  superjob_expiration: 123}}
+
+        subjob = described_class.new(attributes)
+        subjob.save
+        Sidekiq.redis do |conn|
+          expect(conn.ttl(subjob.key)).to be 123
+        end
+      end
+    end
+
+    context 'superjob_expiration is not set' do
+      it "sets the subjobs expiry accordingly" do
+        subjob = described_class.new(attributes)
+        subjob.save
+        Sidekiq.redis do |conn|
+          expect(conn.ttl(subjob.key)).to be -1
+        end
+      end
+    end
+  end
+
   describe '#to_param' do
     it 'returns a hash including all given attributes' do
       subjob = described_class.new(attributes)

@@ -136,6 +136,16 @@ When a superjob is queued, records for all of its subjobs are created. By defaul
 Sidekiq::Superworker.options[:delete_subjobs_after_superjob_completes] = false
 ```
 
+#### Expire superworkers
+
+When a subjob dies due to too many retries depending jobs will never run and the superjob will never be completed. Therefore the sujob redis keys will never be removed.
+When setting `superjob_expiration` to *x* the subjobs keys will expire in *x* seconds. Default value is `nil` (the keys will never expire).
+
+```ruby
+# config/initializers/superworker.rb
+Sidekiq::Superworker.options[:superjob_expiration] = 2592000 # 1 Month
+```
+
 ### Logging
 
 To make debugging easier, Sidekiq Superworker provides detailed log messages when its logger is set to the DEBUG level:
