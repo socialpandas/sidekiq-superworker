@@ -9,7 +9,8 @@ module Sidekiq
   module Superworker
     DEFAULTS = {
       delete_subjobs_after_superjob_completes: true,
-      subjob_redis_prefix: 'subjob'
+      subjob_redis_prefix: 'subjob',
+      superjob_expiration: nil
     }
 
     def self.options

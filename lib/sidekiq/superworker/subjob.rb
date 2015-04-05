@@ -74,7 +74,7 @@ module Sidekiq
           result = nil
           Sidekiq.redis do |conn|
             conn.multi do
-              result = yield
+              result = yield(conn)
             end
           end
           result
@@ -102,8 +102,10 @@ module Sidekiq
 
       def save
         return false unless self.valid?
-        Sidekiq.redis do |conn|
+
+        self.class.transaction do |conn|
           conn.mapped_hmset(key, to_param)
+          conn.expire(key,Superworker.options[:superjob_expiration]) if Superworker.options[:superjob_expiration]
         end
         true
       end
