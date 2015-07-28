@@ -4,9 +4,8 @@ module Sidekiq
       include ActiveModel::Validations
       include ActiveModel::Naming
 
-      ATTRIBUTES = [:subjob_id, :superjob_id, :parent_id, :children_ids, :next_id, :children_ids,
-        :subworker_class, :superworker_class, :arg_keys, :arg_values, :status, :descendants_are_complete,
-        :meta]
+      ATTRIBUTES = [:subjob_id, :superjob_id, :parent_id, :next_id, :children_ids, :subworker_class,
+        :superworker_class, :arg_keys, :arg_values, :status, :descendants_are_complete, :meta]
 
       attr_accessor *ATTRIBUTES
 
