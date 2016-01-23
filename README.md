@@ -67,12 +67,15 @@ First, define a superworker in a file that's included during the initialization 
 
 ```ruby
 # config/initializers/superworkers.rb
+Dir['./app/superworkers/*'].each { |f| require f }
 
+# app/superworkers/my_superworker.rb
 Superworker.define(:MySuperworker, :user_id, :comment_id) do
   Worker1 :user_id, :comment_id
   Worker2 :comment_id
 end
 
+# app/superworkers/my_other_superworker.rb
 Superworker.define(:MyOtherSuperworker, :comment_id) do
   Worker2 :comment_id
   Worker3 :comment_id
